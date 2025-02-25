@@ -2,15 +2,18 @@
     "priority_layers": {
         "drought": {
             "layer_name": "Drought",
-            "filename": "Drought.gpkg"
+            "filename": "Drought.gpkg",
+            "weighting": "1.23"
         },
         "flooding_nfm": {
             "layer_name": "Flooding - NFM",
-            "filename": "Flooding - NFM.gpkg"
+            "filename": "Flooding - NFM.gpkg",
+            "weighting": "1"
         },
         "enhancement_of_blue_green_infrastructure": {
             "layer_name": "Enhancement of blue-green infrastructure",
-            "filename": "Enhancement of blue-green infrastructure.gpkg"
+            "filename": "Enhancement of blue-green infrastructure.gpkg",
+            "weighting": "0.824"
         }
     },
     "eligibility_layers": {}

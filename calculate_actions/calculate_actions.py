@@ -2,15 +2,16 @@ import os
 import json
 import argparse
 import logging
+import shapely
 import geopandas as gpd
 
 from shapely import to_wkt
 
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(asctime)s: %(message)s')
+from common.PriorityLayer import PriorityLayer, processPriorityLayers
+from priority_scores.Calculator import Calculator as PriorityCalculator
+from priority_scores.Weighting import Weighting as PriorityWeighting
 
-def get_priority_score(polygon, priority_filepath):
-    gdf = gpd.read_file(priority_filepath)
-    return 0
+logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(asctime)s: %(message)s')
 
 def get_weighted_priority_score(poly_id, priority_score, weightings):
     return 0
@@ -25,34 +26,32 @@ def get_action_scores(option, priority_scores):
     return 0
 
 def main(poly_id, wkt, data_dir, layer_config, priority_weightings, qeia_matrix):
-    logging.info(f"Generating actions for polygon {poly_id} defined in {wkt}")
+    logging.info(f'Generating actions for polygon {poly_id} defined in {wkt}')
 
-    priority_layers = {}
+    priorityLayers: list[PriorityLayer] = []
     eligibility_layers = {}
     with open(layer_config) as f:
         config = json.load(f)
-        priority_layers = config["priority_layers"]
-        eligibility_layers = config["eligibility_layers"]
+        priorityLayers = processPriorityLayers(config['priority_layers'], data_dir)
+        eligibility_layers = config['eligibility_layers']
 
-    logging.info(f"Found {len(priority_layers)} priority layers in the config file")
+    logging.info(f'Found {len(priorityLayers)} priority layers in the config file')
 
-    polygon = ""
+    polygon = ''
     with open(wkt) as f:
-        polygon = to_wkt.loads(f.readline)
+        polygon = f.readline()
 
-    logging.info(f"Input polygon: {polygon}")
+    logging.info(f'Input polygon: {polygon}')
 
-    logging.info("Calculate priority scores")
-    priority_scores = {}
-    for priority_layer in priority_layers:
-        name = priority_layer["layer_name"]
-        filename = priority_layer["filename"]
-        filepath = os.path.join(data_dir, filename)
+    logging.info('Calculate priority scores')
+    priorityCalculator = PriorityCalculator(priorityLayers, data_dir)
+    priorityScores = priorityCalculator.calculatePriorityScoreForPolygon(shapely.from_wkt(geometry=polygon))
+    print(priorityScores)
 
-        priority = get_priority_score(polygon, filepath)
-        weighted_priority = get_weighted_priority_score(poly_id, priority, priority_weightings)
-
-        priority_scores[name] = weighted_priority
+    logging.info('Calculating weighted priority scores')
+    priorityWeightingCalculator = PriorityWeighting(priorityLayers)
+    weightedPriorityScores = priorityWeightingCalculator.calculateWeightings(priorityScores)
+    print(weightedPriorityScores)
 
     logging.info("Filter QEIA scores for polygon")
     qeia_scores = {}
@@ -70,7 +69,7 @@ def main(poly_id, wkt, data_dir, layer_config, priority_weightings, qeia_matrix)
     logging.info("Calculate action scores using priorities and filtered QEIA")
     action_scores = {}
     for option in qeia_scores.keys():
-        option_score = get_action_scores(option, priority_scores)
+        option_score = get_action_scores(option, priorityScores)
 
         action_scores[option] = option_score
 
