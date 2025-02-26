@@ -3,9 +3,7 @@ import json
 import argparse
 import logging
 import shapely
-import geopandas as gpd
-
-from shapely import to_wkt
+import time
 
 from common.PriorityLayer import PriorityLayer, processPriorityLayers
 from priority_scores.Calculator import Calculator as PriorityCalculator
@@ -24,6 +22,15 @@ def get_qeia_scores(option, qeia_matrix):
 
 def get_action_scores(option, priority_scores):
     return 0
+
+def startTimers():
+    return (time.time(), time.process_time())
+
+def endTimers(startWallTime: time, startProcessTime: time, scaleVal: int = 1000):
+    endWallTime = time.time()
+    endProcessTime = time.process_time()
+
+    return (((endWallTime - startWallTime) * scaleVal), ((endProcessTime - startProcessTime) * scaleVal))
 
 def main(poly_id, wkt, data_dir, layer_config, priority_weightings, qeia_matrix):
     logging.info(f'Generating actions for polygon {poly_id} defined in {wkt}')
@@ -44,14 +51,28 @@ def main(poly_id, wkt, data_dir, layer_config, priority_weightings, qeia_matrix)
     logging.info(f'Input polygon: {polygon}')
 
     logging.info('Calculate priority scores')
+    (startWallTime, startProcessTime) = startTimers()
+    
     priorityCalculator = PriorityCalculator(priorityLayers, data_dir)
     priorityScores = priorityCalculator.calculatePriorityScoreForPolygon(shapely.from_wkt(geometry=polygon))
-    print(priorityScores)
+    
+    (wallTime, processTime) = endTimers(startWallTime, startProcessTime, 1)
+    
+    logging.info(priorityScores)
+    logging.info(f'Wall Time: {wallTime} seconds')
+    logging.info(f'Process Time: {processTime} seconds')
 
     logging.info('Calculating weighted priority scores')
+    (startWallTime, startProcessTime) = startTimers()
+
     priorityWeightingCalculator = PriorityWeighting(priorityLayers)
     weightedPriorityScores = priorityWeightingCalculator.calculateWeightings(priorityScores)
-    print(weightedPriorityScores)
+    
+    (wallTime, processTime) = endTimers(startWallTime, startProcessTime)
+
+    logging.info(weightedPriorityScores)
+    logging.info(f'Wall Time: {wallTime} milliseconds')
+    logging.info(f'Process Time: {processTime} milliseconds')
 
     logging.info("Filter QEIA scores for polygon")
     qeia_scores = {}

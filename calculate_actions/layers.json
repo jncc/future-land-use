@@ -1,19 +1,64 @@
 {
     "priority_layers": {
+        "biodiversity_atmospheric_deposition_of_n_and_exceedance_of_critical_loads": {
+            "layer_name": "Biodiversity - Atmospheric deposition of N and exceedance of critical loads",
+            "filename": "Biodiversity - Atmospheric deposition of N and exceedance of critical loads.gpkg",
+            "weighting": 1
+        },
+        "changes_in_landscape_and_waterscape_character": {
+            "layer_name": "Changes in landscape and waterscape character",
+            "filename": "Changes in landscape and waterscape character.gpkg",
+            "weighting": 1
+        },
+        "coastal": {
+            "layer_name": "Coastal",
+            "filename": "Coastal.gpkg",
+            "weighting": 1
+        },
+        "condition_of_scheduled_monuments": {
+            "layer_name": "Condition of Scheduled Monuments",
+            "filename": "Condition of Scheduled Monuments.gpkg",
+            "weighting": 1
+        },
         "drought": {
             "layer_name": "Drought",
             "filename": "Drought.gpkg",
-            "weighting": "1.23"
-        },
-        "flooding_nfm": {
-            "layer_name": "Flooding - NFM",
-            "filename": "Flooding - NFM.gpkg",
-            "weighting": "1"
+            "weighting": 1.23
         },
         "enhancement_of_blue_green_infrastructure": {
             "layer_name": "Enhancement of blue-green infrastructure",
             "filename": "Enhancement of blue-green infrastructure.gpkg",
-            "weighting": "0.824"
+            "weighting": 0.824
+        },
+        "flooding_nfm": {
+            "layer_name": "Flooding - NFM",
+            "filename": "Flooding - NFM.gpkg",
+            "weighting": 1
+        },
+        "food_production": {
+            "layer_name": "Food Production",
+            "filename": "Food Production.gpkg",
+            "weighting": 1
+        },
+        "freshwater_quality": {
+            "layer_name": "Freshwater Quality",
+            "filename": "Freshwater Quality.gpkg",
+            "weighting": 1
+        },
+        "pressure_reduced_emissions_of_nh3": {
+            "layer_name": "Pressure - Reduced emissions of NH3",
+            "filename": "Pressure - Reduced emissions of NH3.gpkg",
+            "weighting": 1
+        },
+        "reduced_faecal_indicator_organisms": {
+            "layer_name": "Reduced faecal indicator organisms",
+            "filename": "Reduced faecal indicator organisms.gpkg",
+            "weighting": 1
+        },
+        "water_resources": {
+            "layer_name": "Water Resources",
+            "filename": "Water Resources.gpkg",
+            "weighting": 1
         }
     },
     "eligibility_layers": {}
