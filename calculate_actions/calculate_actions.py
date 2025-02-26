@@ -3,7 +3,7 @@ import argparse
 import logging
 import shapely
 
-from common.PriorityLayer import PriorityLayer, processPriorityLayers
+from common.layers import PriorityLayer, processPriorityLayers
 from common.Timing import startTimers, endTimers
 from priority_scores.Calculator import Calculator as PriorityCalculator
 from priority_scores.Weighting import Weighting as PriorityWeighting
@@ -25,7 +25,7 @@ def get_action_scores(option, priority_scores):
 def main(poly_id, wkt, data_dir, layer_config, priority_weightings, qeia_matrix):
     logging.info(f'Generating actions for polygon {poly_id} defined in {wkt}')
 
-    priorityLayers: list[PriorityLayer] = []
+    priorityLayers: dict[str, PriorityLayer] = {}
     eligibility_layers = {}
     with open(layer_config) as f:
         config = json.load(f)

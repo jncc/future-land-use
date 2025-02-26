@@ -1,24 +1,18 @@
-from common.PriorityLayer import PriorityLayer
+from common.layers import PriorityLayer
 import numpy as np
 
 class Weighting:
     DECIMAL_PLACES = 2
-    priorityLayers: list[PriorityLayer]
+    priorityLayers: dict[str, PriorityLayer]
 
-    def __init__(self, priorityLayers: list[PriorityLayer]):
+    def __init__(self, priorityLayers: dict[str, PriorityLayer]):
         self.priorityLayers = priorityLayers
     
-    def getWeightingForName(self, name:str) -> float:
-        return np.round(np.float64(next(iter([layer for layer in self.priorityLayers if layer.name is name])).weighting), 2)
-    
-    def calculateSingleWeighting(self, name, score):
-        return (name, score * self.getWeightingForName(name))
-
-    def calculateWeightings(self, scores: list[(str, np.float64)]):
-        weightedScores = []
+    def calculateWeightings(self, scores: dict[str, np.float64]) -> dict[str, np.floating]:
+        weightedScores: dict[str, np.floating] = {}
 
         for score in scores:
-            weightedScores.append(self.calculateSingleWeighting(score[0], score[1]))
+            weightedScores[score] = self.priorityLayers[score].calculateWeightedScore(scores[score])
         
         return weightedScores
 
