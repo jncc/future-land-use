@@ -1,11 +1,10 @@
-import os
 import json
 import argparse
 import logging
 import shapely
-import time
 
 from common.PriorityLayer import PriorityLayer, processPriorityLayers
+from common.Timing import startTimers, endTimers
 from priority_scores.Calculator import Calculator as PriorityCalculator
 from priority_scores.Weighting import Weighting as PriorityWeighting
 
@@ -22,15 +21,6 @@ def get_qeia_scores(option, qeia_matrix):
 
 def get_action_scores(option, priority_scores):
     return 0
-
-def startTimers():
-    return (time.time(), time.process_time())
-
-def endTimers(startWallTime: time, startProcessTime: time, scaleVal: int = 1000):
-    endWallTime = time.time()
-    endProcessTime = time.process_time()
-
-    return (((endWallTime - startWallTime) * scaleVal), ((endProcessTime - startProcessTime) * scaleVal))
 
 def main(poly_id, wkt, data_dir, layer_config, priority_weightings, qeia_matrix):
     logging.info(f'Generating actions for polygon {poly_id} defined in {wkt}')
