@@ -3,10 +3,10 @@ import argparse
 import logging
 import shapely
 
-from common.layers import PriorityLayer, processPriorityLayers
-from common.Timing import startTimers, endTimers
-from priority_scores.Calculator import Calculator as PriorityCalculator
-from priority_scores.Weighting import Weighting as PriorityWeighting
+from common.layers import EligibilityLayer, PriorityLayer, processEligibilityLayers, processPriorityLayers
+from common.timing import startTimers, endTimers
+from priority_scores import Calculator as PriorityCalculator, Weighting as PriorityWeighting
+from eligibility import Calculator as EligibilityCalculator
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(asctime)s: %(message)s')
 
@@ -22,29 +22,31 @@ def get_qeia_scores(option, qeia_matrix):
 def get_action_scores(option, priority_scores):
     return 0
 
-def main(poly_id, wkt, data_dir, layer_config, priority_weightings, qeia_matrix):
-    logging.info(f'Generating actions for polygon {poly_id} defined in {wkt}')
+def main(polyId, wkt, priorityDataDir, eligibilityDataDir, layerConfig, qeiaMatrix):
+    logging.info(f'Generating actions for polygon {polyId} defined in {wkt}')
 
     priorityLayers: dict[str, PriorityLayer] = {}
-    eligibility_layers = {}
-    with open(layer_config) as f:
+    eligibilityLayers: dict[str, EligibilityLayer] = {}
+    with open(layerConfig) as f:
         config = json.load(f)
-        priorityLayers = processPriorityLayers(config['priority_layers'], data_dir)
-        eligibility_layers = config['eligibility_layers']
+        priorityLayers = processPriorityLayers(config['priority_layers'], priorityDataDir)
+        eligibilityLayers = processEligibilityLayers(config['eligibility_layers'], eligibilityDataDir)
 
     logging.info(f'Found {len(priorityLayers)} priority layers in the config file')
 
-    polygon = ''
+    polygonStr = ''
     with open(wkt) as f:
-        polygon = f.readline()
+        polygonStr = f.readline()
+        polygon = shapely.from_wkt(geometry=polygonStr)
+    
 
     logging.info(f'Input polygon: {polygon}')
 
     logging.info('Calculate priority scores')
     (startWallTime, startProcessTime) = startTimers()
     
-    priorityCalculator = PriorityCalculator(priorityLayers, data_dir)
-    priorityScores = priorityCalculator.calculatePriorityScoreForPolygon(shapely.from_wkt(geometry=polygon))
+    priorityCalculator = PriorityCalculator(priorityLayers)
+    priorityScores = priorityCalculator.calculatePriorityScoreForPolygon(polygon)
     
     (wallTime, processTime) = endTimers(startWallTime, startProcessTime, 1)
     
@@ -64,18 +66,30 @@ def main(poly_id, wkt, data_dir, layer_config, priority_weightings, qeia_matrix)
     logging.info(f'Wall Time: {wallTime} milliseconds')
     logging.info(f'Process Time: {processTime} milliseconds')
 
+    logging.info('Determining polygon eligibility')
+    (startWallTime, startProcessTime) = startTimers()
+
+    eligibilityCalculator = EligibilityCalculator(eligibilityLayers)
+    eligbility = eligibilityCalculator.determineEligibilityForPolygon(polygon)
+    
+    (wallTime, processTime) = endTimers(startWallTime, startProcessTime, 1)
+
+    logging.info(eligbility)
+    logging.info(f'Wall Time: {wallTime} milliseconds')
+    logging.info(f'Process Time: {processTime} milliseconds')    
+
     logging.info("Filter QEIA scores for polygon")
     qeia_scores = {}
-    for eligibility_layer in eligibility_layers:
-        option = eligibility_layer["layer_name"]
-        filename = eligibility_layer["filename"]
+    # for eligibility_layer in eligibility_layers:
+    #     option = eligibility_layer["layer_name"]
+    #     filename = eligibility_layer["filename"]
 
-        eligible = get_eligibility(polygon, filename)
+    #     eligible = get_eligibility(polygon, filename)
 
-        if eligible:
-            filtered_qeia = get_qeia_scores(option, qeia_matrix)
+    #     if eligible:
+    #         filtered_qeia = get_qeia_scores(option, qeia_matrix)
     
-            qeia_scores[option] = filtered_qeia
+    #         qeia_scores[option] = filtered_qeia
 
     logging.info("Calculate action scores using priorities and filtered QEIA")
     action_scores = {}
@@ -90,11 +104,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate action scores for a given polygon land parcel")
     parser.add_argument('-i', '--poly_id', type=str, required=True, help="Unique ID for the polygon")
     parser.add_argument('-w', '--wkt', type=str, required=True, help="WKT file containing polygon geometry")
-    parser.add_argument('-d', '--data_dir', type=str, required=True, help="Directory containing all the layers")
+    parser.add_argument('-d', '--priority_data_dir', type=str, required=True, help="Directory containing all the priority layers")
+    parser.add_argument('-e', '--eligibility_data_dir', type=str, required=True, help="Directory containing all the eligibility layers")
     parser.add_argument('-l', '--layer_config', type=str, required=False, default="layers.json", help="JSON file containing priority and eligibility layers")
-    parser.add_argument('-p', '--priority_weightings', type=str, required=True, help="File containing priority weightings matrix")
     parser.add_argument('-q', '--qeia_matrix', type=str, required=False, help="Raw QEIA impact score matrix file")
 
     args = parser.parse_args()
 
-    main(args.poly_id, args.wkt, args.data_dir, args.layer_config, args.priority_weightings, args.qeia_matrix)
+    main(args.poly_id, args.wkt, args.priority_data_dir, args.eligibility_data_dir, args.layer_config, args.qeia_matrix)

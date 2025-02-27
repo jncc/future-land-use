@@ -1,5 +1,5 @@
 from common.layers import PriorityLayer
-from common.Timing import startTimers, endTimers
+from common.timing import startTimers, endTimers
 from shapely import Polygon
 import logging
 import numpy as np
@@ -10,8 +10,7 @@ class Calculator:
     basePath: str
     priorityLayers: dict[str, PriorityLayer]
 
-    def __init__(self, priorityLayers: dict[str, PriorityLayer], basePath: str = ''):
-        self.basePath = basePath
+    def __init__(self, priorityLayers: dict[str, PriorityLayer]):
         self.priorityLayers = priorityLayers
 
     def calculatePriorityScoreForPolygon(self, polygon: Polygon) -> dict[str, np.floating]:
@@ -24,9 +23,9 @@ class Calculator:
 
             (wallTime, processTime) = endTimers(startWallTime, startProcessTime)
 
-            logging.info(f'Processed priority layer: {self.priorityLayers[layer].name}')
-            logging.info(f'Wall Time: {wallTime} milliseconds')
-            logging.info(f'Process Time: {processTime} milliseconds')
+            logging.info(f'--- Processed priority layer: {self.priorityLayers[layer].name}')
+            logging.info(f'--- Wall Time: {wallTime} milliseconds')
+            logging.info(f'--- Process Time: {processTime} milliseconds')
 
         return df
 

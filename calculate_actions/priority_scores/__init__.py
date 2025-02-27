@@ -1,2 +1,2 @@
-import priority_scores.Calculator
-import priority_scores.Weighting
+from priority_scores.calculator import Calculator
+from priority_scores.weighting import Weighting
