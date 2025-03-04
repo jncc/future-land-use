@@ -1,0 +1,1 @@
+from mcda.mcda import calculateMultiCriteriaDecisionAnalysisForParcel, multiCriteriaDecisionAnalysisToRows

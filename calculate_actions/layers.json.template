@@ -16,5 +16,22 @@
             "weighting": 1
         }
     },
-    "eligibility_layers": {}
+    "eligibility_layers": {
+        "gs67": {
+            "layer_name": "GS67",
+            "filename": "footprint_GS67.gpkg"
+        },
+        "lh1": {
+            "layer_name": "LH1",
+            "filename": "footprint_LH1.gpkg"
+        },
+        "sw17": {
+            "layer_name": "SW17",
+            "filename": "footprint_SW17.gpkg"
+        },
+        "sw18": {
+            "layer_name": "SW18",
+            "filename": "footprint_SW18.gpkg"
+        }
+    }
 }

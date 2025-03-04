@@ -1,7 +1,9 @@
 from common.layers import EligibilityLayer
 from common.timing import startTimers, endTimers
 from shapely import Polygon
+
 import logging
+import pandas as pd
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(asctime)s: %(message)s')
 
@@ -32,3 +34,10 @@ class Calculator:
 
         return list(df)
 
+    def createOutputTableRow(self, id, options, eligibleOptions):
+        row = {'id': [id]}
+        
+        for option in options:
+            row[option] = [option in eligibleOptions]
+
+        return pd.DataFrame.from_dict(row)

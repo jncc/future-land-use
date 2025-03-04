@@ -5,16 +5,12 @@ import shapely
 
 from common.layers import EligibilityLayer, PriorityLayer, processEligibilityLayers, processPriorityLayers
 from common.timing import startTimers, endTimers
+from common.qeia import Raw as RawQeia, Filtered as FilteredQeia
 from priority_scores import Calculator as PriorityCalculator, Weighting as PriorityWeighting
 from eligibility import Calculator as EligibilityCalculator
+from mcda import calculateMultiCriteriaDecisionAnalysisForParcel, multiCriteriaDecisionAnalysisToRows
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(asctime)s: %(message)s')
-
-def get_weighted_priority_score(poly_id, priority_score, weightings):
-    return 0
-
-def get_eligibility(polygon, eligibility_filepath):
-    return False
 
 def get_qeia_scores(option, qeia_matrix):
     return {}
@@ -34,11 +30,16 @@ def main(polyId, wkt, priorityDataDir, eligibilityDataDir, layerConfig, qeiaMatr
 
     logging.info(f'Found {len(priorityLayers)} priority layers in the config file')
 
+    with open(qeiaMatrix) as f:
+        config = json.load(f)
+        rawQeia = RawQeia(config)
+
+    logging.info(f'Imported Raw QEIA matrix')
+
     polygonStr = ''
     with open(wkt) as f:
         polygonStr = f.readline()
         polygon = shapely.from_wkt(geometry=polygonStr)
-    
 
     logging.info(f'Input polygon: {polygon}')
 
@@ -76,27 +77,21 @@ def main(polyId, wkt, priorityDataDir, eligibilityDataDir, layerConfig, qeiaMatr
 
     logging.info(eligbility)
     logging.info(f'Wall Time: {wallTime} milliseconds')
-    logging.info(f'Process Time: {processTime} milliseconds')    
+    logging.info(f'Process Time: {processTime} milliseconds')
+
+    eligbilityRow = eligibilityCalculator.createOutputTableRow(polyId, [layer.upper() for layer in eligibilityLayers], eligbility)
 
     logging.info("Filter QEIA scores for polygon")
     qeia_scores = {}
-    # for eligibility_layer in eligibility_layers:
-    #     option = eligibility_layer["layer_name"]
-    #     filename = eligibility_layer["filename"]
 
-    #     eligible = get_eligibility(polygon, filename)
-
-    #     if eligible:
-    #         filtered_qeia = get_qeia_scores(option, qeia_matrix)
-    
-    #         qeia_scores[option] = filtered_qeia
+    filtered = FilteredQeia(rawQeia, eligbility)
+    print(filtered.qeia)
+    print(filtered.createOutputTableRow())
 
     logging.info("Calculate action scores using priorities and filtered QEIA")
-    action_scores = {}
-    for option in qeia_scores.keys():
-        option_score = get_action_scores(option, priorityScores)
-
-        action_scores[option] = option_score
+    mcda = calculateMultiCriteriaDecisionAnalysisForParcel(weightedPriorityScores, filtered)
+    print(mcda)
+    print(mcda.transpose())
 
     # save action_scores to file or something?
 

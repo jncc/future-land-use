@@ -1,0 +1,22 @@
+{
+    "gs67": {
+        "drought": 1,
+        "enhancement_of_blue_green_infrastructure": 2,
+        "flooding_nfm": 3
+    },
+    "lh1": {
+        "drought": 1,
+        "enhancement_of_blue_green_infrastructure": 2,
+        "flooding_nfm": 3
+    },
+    "sw17": {
+        "drought": 1,
+        "enhancement_of_blue_green_infrastructure": 2,
+        "flooding_nfm": 3
+    },
+    "sw18": {
+        "drought": 1,
+        "enhancement_of_blue_green_infrastructure": 2,
+        "flooding_nfm": 3
+    }
+}
