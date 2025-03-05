@@ -5,7 +5,7 @@ import shapely
 
 from common.layers import EligibilityLayer, PriorityLayer, processEligibilityLayers, processPriorityLayers
 from common.timing import startTimers, endTimers
-from common.qeia import Raw as RawQeia, Filtered as FilteredQeia
+from common.qeia import QEIAMatrix
 from priority_scores import Calculator as PriorityCalculator, Weighting as PriorityWeighting
 from eligibility import Calculator as EligibilityCalculator
 from mcda import calculateMultiCriteriaDecisionAnalysisForParcel
@@ -27,7 +27,8 @@ def main(polyId, wkt, priorityDataDir, eligibilityDataDir, layerConfig, qeiaMatr
 
     with open(qeiaMatrix) as f:
         config = json.load(f)
-        rawQeia = RawQeia(config)
+        rawQeia = QEIAMatrix(config)
+        # rawQeia = RawQeia(config)
 
     logging.info(f'Imported Raw QEIA matrix')
 
@@ -81,7 +82,7 @@ def main(polyId, wkt, priorityDataDir, eligibilityDataDir, layerConfig, qeiaMatr
     logging.info("Filter QEIA scores for polygon")
     
     (startWallTime, startProcessTime) = startTimers()
-    filteredQeia = FilteredQeia(rawQeia, eligbility)
+    filteredQeia = rawQeia.getFilteredMatrix(eligbility)
     (wallTime, processTime) = endTimers(startWallTime, startProcessTime)
     print(filteredQeia.createOutputTableRow())
     logging.info(f'Wall Time: {wallTime} milliseconds')

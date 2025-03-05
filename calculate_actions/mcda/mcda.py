@@ -1,16 +1,16 @@
-from common.qeia import Filtered as FilteredQeia
+from common.qeia import QEIAMatrix
 import numpy as np
 import pandas as pd
 
-def calculateMultiCriteriaDecisionAnalysisForParcel(weightedScores: dict[str, np.floating], filteredQeia: FilteredQeia) -> pd.DataFrame:
+def calculateMultiCriteriaDecisionAnalysisForParcel(weightedScores: dict[str, np.floating], filteredQeia: QEIAMatrix) -> pd.DataFrame:
     mcda = {}
 
-    for option in filteredQeia.qeia:
+    for option in filteredQeia.options:
         mcda[option] = {}
         total: np.float64 = 0
 
-        for priority in filteredQeia.qeia[option]:
-            mcdaValue = weightedScores[priority] * filteredQeia.qeia[option][priority]
+        for priority in filteredQeia.options[option].getPriorityModifiers():
+            mcdaValue = weightedScores[priority] * filteredQeia.options[option].getPriorityModifier(priority)
             total = total + (0 if np.isnan(mcdaValue) else mcdaValue)
             mcda[option][priority] = mcdaValue
         mcda[option]['total'] = total

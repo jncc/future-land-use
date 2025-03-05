@@ -1,2 +1,1 @@
-from common.qeia.raw import Raw
-from common.qeia.filtered import Filtered
+from common.qeia.qeia import QEIAMatrix
