@@ -8,17 +8,12 @@ from common.timing import startTimers, endTimers
 from common.qeia import Raw as RawQeia, Filtered as FilteredQeia
 from priority_scores import Calculator as PriorityCalculator, Weighting as PriorityWeighting
 from eligibility import Calculator as EligibilityCalculator
-from mcda import calculateMultiCriteriaDecisionAnalysisForParcel, multiCriteriaDecisionAnalysisToRows
+from mcda import calculateMultiCriteriaDecisionAnalysisForParcel
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(asctime)s: %(message)s')
 
-def get_qeia_scores(option, qeia_matrix):
-    return {}
-
-def get_action_scores(option, priority_scores):
-    return 0
-
 def main(polyId, wkt, priorityDataDir, eligibilityDataDir, layerConfig, qeiaMatrix):
+    (totalStartWallTime, totalStartProcessTime) = startTimers()
     logging.info(f'Generating actions for polygon {polyId} defined in {wkt}')
 
     priorityLayers: dict[str, PriorityLayer] = {}
@@ -42,6 +37,8 @@ def main(polyId, wkt, priorityDataDir, eligibilityDataDir, layerConfig, qeiaMatr
         polygon = shapely.from_wkt(geometry=polygonStr)
 
     logging.info(f'Input polygon: {polygon}')
+    
+    (procStartWallTime, procStartProcessTime) = startTimers()
 
     logging.info('Calculate priority scores')
     (startWallTime, startProcessTime) = startTimers()
@@ -76,22 +73,38 @@ def main(polyId, wkt, priorityDataDir, eligibilityDataDir, layerConfig, qeiaMatr
     (wallTime, processTime) = endTimers(startWallTime, startProcessTime, 1)
 
     logging.info(eligbility)
-    logging.info(f'Wall Time: {wallTime} milliseconds')
-    logging.info(f'Process Time: {processTime} milliseconds')
+    logging.info(f'Wall Time: {wallTime} seconds')
+    logging.info(f'Process Time: {processTime} seconds')
 
     eligbilityRow = eligibilityCalculator.createOutputTableRow(polyId, [layer.upper() for layer in eligibilityLayers], eligbility)
 
     logging.info("Filter QEIA scores for polygon")
-    qeia_scores = {}
-
-    filtered = FilteredQeia(rawQeia, eligbility)
-    print(filtered.qeia)
-    print(filtered.createOutputTableRow())
+    
+    (startWallTime, startProcessTime) = startTimers()
+    filteredQeia = FilteredQeia(rawQeia, eligbility)
+    (wallTime, processTime) = endTimers(startWallTime, startProcessTime)
+    print(filteredQeia.createOutputTableRow())
+    logging.info(f'Wall Time: {wallTime} milliseconds')
+    logging.info(f'Process Time: {processTime} milliseconds')
 
     logging.info("Calculate action scores using priorities and filtered QEIA")
-    mcda = calculateMultiCriteriaDecisionAnalysisForParcel(weightedPriorityScores, filtered)
+    (startWallTime, startProcessTime) = startTimers()
+    mcda = calculateMultiCriteriaDecisionAnalysisForParcel(weightedPriorityScores, filteredQeia)
+    (wallTime, processTime) = endTimers(startWallTime, startProcessTime)
     print(mcda)
     print(mcda.transpose())
+    logging.info(f'Wall Time: {wallTime} milliseconds')
+    logging.info(f'Process Time: {processTime} milliseconds')
+
+    (wallTime, processTime) = endTimers(procStartWallTime, procStartProcessTime, 1)
+    logging.info('---------------------------- Processing Complete ---------------------------- ')
+    logging.info(f'Wall Time: {wallTime} seconds')
+    logging.info(f'Process Time: {processTime} seconds')
+
+    (wallTime, processTime) = endTimers(totalStartWallTime, totalStartProcessTime, 1)
+    logging.info('---------------------------- Execution Complete ---------------------------- ')
+    logging.info(f'Wall Time: {wallTime} seconds')
+    logging.info(f'Process Time: {processTime} seconds')
 
     # save action_scores to file or something?
 
