@@ -12,7 +12,16 @@ from mcda import calculateMultiCriteriaDecisionAnalysisForParcel
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(asctime)s: %(message)s')
 
-def main(polyId, wkt, priorityDataDir, eligibilityDataDir, layerConfig, qeiaMatrix):
+def main(polyId: str, wkt: str, layerConfig: str, qeiaMatrix: str):
+    """Process a single polygon through to MCDA, using weighted priority scores,
+    eligible option layers and an input QEIA matrix
+
+    Args:
+        polyId (str): An ID for this polygon
+        wkt (str): A path to a WKT file describing the input polygon as WKT (in the same projection as the eligibility and priority layers)
+        layerConfig (str): Path to a JSON file containing a configuration object for layers (priority and eligibility)
+        qeiaMatrix (str): Path to a JSON file containing a configuration object for a QEIA matrix to process against
+    """
     (totalStartWallTime, totalStartProcessTime) = startTimers()
     logging.info(f'Generating actions for polygon {polyId} defined in {wkt}')
 
@@ -20,15 +29,14 @@ def main(polyId, wkt, priorityDataDir, eligibilityDataDir, layerConfig, qeiaMatr
     eligibilityLayers: dict[str, EligibilityLayer] = {}
     with open(layerConfig) as f:
         config = json.load(f)
-        priorityLayers = processPriorityLayers(config['priority_layers'], priorityDataDir)
-        eligibilityLayers = processEligibilityLayers(config['eligibility_layers'], eligibilityDataDir)
+        priorityLayers = processPriorityLayers(config['priority_layers'])
+        eligibilityLayers = processEligibilityLayers(config['eligibility_layers'])
 
     logging.info(f'Found {len(priorityLayers)} priority layers in the config file')
 
     with open(qeiaMatrix) as f:
         config = json.load(f)
         rawQeia = QEIAMatrix(config)
-        # rawQeia = RawQeia(config)
 
     logging.info(f'Imported Raw QEIA matrix')
 
@@ -113,8 +121,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate action scores for a given polygon land parcel")
     parser.add_argument('-i', '--poly_id', type=str, required=True, help="Unique ID for the polygon")
     parser.add_argument('-w', '--wkt', type=str, required=True, help="WKT file containing polygon geometry")
-    parser.add_argument('-d', '--priority_data_dir', type=str, required=True, help="Directory containing all the priority layers")
-    parser.add_argument('-e', '--eligibility_data_dir', type=str, required=True, help="Directory containing all the eligibility layers")
     parser.add_argument('-l', '--layer_config', type=str, required=False, default="layers.json", help="JSON file containing priority and eligibility layers")
     parser.add_argument('-q', '--qeia_matrix', type=str, required=False, help="Raw QEIA impact score matrix file")
 

@@ -31,14 +31,14 @@ class PriorityRasterLayer(RasterLayer, PriorityLayer):
     def calculateScore(self, polygon: Polygon, columnName: str = 'PriorityScore'):
         return super().calculateScore(polygon, columnName)
 
-def processPriorityLayers(priorityLayersConfig: any, basePath: str) -> dict[str, PriorityLayer]:
+def processPriorityLayers(priorityLayersConfig: any) -> dict[str, PriorityLayer]:
     priorityLayers: dict[str, PriorityLayer] = {}
     
     for layer in priorityLayersConfig:
         priorityLayers[layer] = PriorityVectorLayer(
                 layer, 
                 priorityLayersConfig[layer]['layer_name'],
-                Path(basePath).joinpath(Path(priorityLayersConfig[layer]['filename'])),
+                Path(priorityLayersConfig[layer]['filename']),
                 priorityLayersConfig[layer]['weighting']
             )
 

@@ -29,13 +29,13 @@ class EligibilityRasterLayer(RasterLayer, EligibilityLayer):
     def determineEligibility(self, polygon: Polygon,  nameColumn: str = 'Option') -> tuple[bool, np.ndarray[str]]:
         return True
 
-def processEligibilityLayers(eligibilityLayersConfig: any, basePath: str) -> dict[str, EligibilityLayer]:
+def processEligibilityLayers(eligibilityLayersConfig: any) -> dict[str, EligibilityLayer]:
     eligibilityLayers: dict[str, EligibilityLayer] = {}
     
     for layer in eligibilityLayersConfig:
         eligibilityLayers[layer] = EligibilityVectorLayer(
                 layer, 
                 eligibilityLayersConfig[layer]['layer_name'],
-                Path(basePath).joinpath(Path(eligibilityLayersConfig[layer]['filename']))) 
+                Path(eligibilityLayersConfig[layer]['filename']))
 
     return eligibilityLayers
