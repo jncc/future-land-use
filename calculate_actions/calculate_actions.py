@@ -126,4 +126,4 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    main(args.poly_id, args.wkt, args.priority_data_dir, args.eligibility_data_dir, args.layer_config, args.qeia_matrix)
+    main(args.poly_id, args.wkt, args.layer_config, args.qeia_matrix)
