@@ -65,7 +65,7 @@ def main(polyId: str, wkt: str, layerConfig: str, qeiaMatrix: str):
     (startWallTime, startProcessTime) = startTimers()
 
     priorityWeightingCalculator = PriorityWeighting(priorityLayers)
-    weightedPriorityScores = priorityWeightingCalculator.calculateWeightings(priorityScores)
+    weightedPriorityScores = priorityWeightingCalculator.calculateWeightingScores(priorityScores)
     
     (wallTime, processTime) = endTimers(startWallTime, startProcessTime)
 
