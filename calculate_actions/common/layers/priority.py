@@ -18,14 +18,11 @@ class PriorityLayer:
         """
         self.weighting = weighting
 
-    def calculateScore(self, polygon: Polygon, columnName: str = 'PriorityScore') -> np.floating:
-        """Calculate the score of this layer against a supplied polygon, the priority being stored
-        in the columnName column of this layer (only applicable to vector layers)
+    def calculateScore(self, polygon: Polygon) -> np.floating:
+        """Calculate the score of this layer against a supplied polygon
 
         Args:
             polygon (Polygon): The Polygon to intersect this layer with
-            columnName (str, optional): An optional column name to extract scores from in vector 
-            layers. Defaults to 'PriorityScore'.
 
         Raises:
             NotImplementedError: Not implemented in this base class
@@ -51,8 +48,9 @@ class PriorityVectorLayer(VectorLayer, PriorityLayer):
     """Class for Vector based Priority Layers, extends the VectorLayer and PriorityLayer
     classes for functionality and prototyping
     """
+    columnName: str
 
-    def __init__(self, name: str, friendlyName: str, path: Path, weighting: float = 1):
+    def __init__(self, name: str, friendlyName: str, path: Path, weighting: float = 1, columnName: str = 'PriorityScore'):
         """Initialises the VectorLayer and PriorityLayer superclasses with the supplied
         values
 
@@ -64,8 +62,9 @@ class PriorityVectorLayer(VectorLayer, PriorityLayer):
         """
         VectorLayer.__init__(self, name, friendlyName, path)
         PriorityLayer.__init__(self, weighting)
+        self.columnName = columnName
     
-    def calculateScore(self, polygon: Polygon, columnName: str = 'PriorityScore') -> np.floating:
+    def calculateScore(self, polygon: Polygon) -> np.floating:
         """Calculates the score for this layer interescted with the input Polygon, takes the maximum
         score value from the columnName column that interescts
 
@@ -77,7 +76,7 @@ class PriorityVectorLayer(VectorLayer, PriorityLayer):
             np.floating: The maximum score for this layer intersected with the input polygon
         """
         intersectingPolygons = self.dataTable.intersects(polygon)
-        return (self.dataTable.join(intersectingPolygons.rename('intersecting')))[lambda x: x['intersecting']][columnName].max()
+        return (self.dataTable.join(intersectingPolygons.rename('intersecting')))[lambda x: x['intersecting']][self.columnName].max()
 
 class PriorityRasterLayer(RasterLayer, PriorityLayer):
     """Class for Raster based Priority Layers, extends the RasterLayer and PriorityLayer
@@ -96,18 +95,17 @@ class PriorityRasterLayer(RasterLayer, PriorityLayer):
         """
         super(PriorityRasterLayer).__init__(name, friendlyName, path, weighting)
 
-    def calculateScore(self, polygon: Polygon, columnName: str = 'PriorityScore') -> np.floating:
+    def calculateScore(self, polygon: Polygon) -> np.floating:
         """Calculates the score for this layer interescted with the input Polygon, takes the maximum
         score value from the input raster via zonal stats
 
         Args:
             polygon (Polygon): A polygon to intersect this layer with
-            columnName (str, optional): The score column to use from the vector layer. Defaults to 'PriorityScore'.
 
         Returns:
             np.floating: The maximum score for this layer intersected with the input polygon
         """
-        return super().calculateScore(polygon, columnName)
+        return super().calculateScore(polygon)
 
 def processPriorityLayers(priorityLayersConfig: dict[str, dict[str, str]]) -> dict[str, PriorityLayer]:
     """Process and open a list of priority layers, as vector or raster layers as appropriate,
@@ -132,11 +130,20 @@ def processPriorityLayers(priorityLayersConfig: dict[str, dict[str, str]]) -> di
     priorityLayers: dict[str, PriorityLayer] = {}
     
     for layer in priorityLayersConfig:
-        priorityLayers[layer] = PriorityVectorLayer(
-                layer, 
-                priorityLayersConfig[layer]['layer_name'],
-                Path(priorityLayersConfig[layer]['filename']),
-                priorityLayersConfig[layer]['weighting']
-            )
+        if 'column_name' in priorityLayersConfig[layer]:
+            priorityLayers[layer] = PriorityVectorLayer(
+                    layer, 
+                    priorityLayersConfig[layer]['layer_name'],
+                    Path(priorityLayersConfig[layer]['filename']),
+                    priorityLayersConfig[layer]['weighting'],
+                    priorityLayersConfig[layer]['column_name']
+                )
+        else:
+            priorityLayers[layer] = PriorityVectorLayer(
+                    layer, 
+                    priorityLayersConfig[layer]['layer_name'],
+                    Path(priorityLayersConfig[layer]['filename']),
+                    priorityLayersConfig[layer]['weighting']
+                )
 
     return priorityLayers
