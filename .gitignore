@@ -3,5 +3,4 @@ __pycache__
 .venv
 
 # Hiding local layers from commit so we can work locally
-calculate_actions/layers.json
-calculate_actions/qeia.json
+calculate_actions/*.json
