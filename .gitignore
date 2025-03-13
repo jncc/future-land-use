@@ -1,0 +1,6 @@
+# Python Working Files
+__pycache__
+.venv
+
+# Hiding local layers from commit so we can work locally
+calculate_actions/*.json
