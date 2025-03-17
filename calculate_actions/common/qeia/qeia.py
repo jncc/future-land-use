@@ -88,12 +88,12 @@ class QEIAMatrix:
         """
         filteredMatrix: dict[str, dict[str, int]] = {}
         for option in self.options:
-            if option.upper() in eligible:
+            if option in eligible:
                 filteredMatrix[option] = self.options[option].getPriorityModifiers()
         
         return QEIAMatrix(filteredMatrix)
 
-    def createOutputTableRow(self) -> pd.DataFrame:
+    def createDataFrame(self) -> pd.DataFrame:
         """Returns a Pandas dataframe representation of this QEIAMatrix
 
         Returns:

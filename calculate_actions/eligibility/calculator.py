@@ -21,7 +21,7 @@ class Calculator:
         """
         self.eligibilityLayer = eligibilityLayer
 
-    def determineEligibilityForPolygon(self, polygon: Polygon) -> list[str]:
+    def determineEligibilityForPolygon(self, polygon: Polygon, timing: bool = True) -> list[str]:
         """Determines the eligible options for a given Polygon iterating through all configured
         EligibilityLayers, each eligiblity layer may potentially contian mutliple options but currently
         it is only one option per layer
@@ -35,18 +35,18 @@ class Calculator:
         df: set[str] = set([])
         
         for layer in self.eligibilityLayer:
-            (startWallTime, startProcessTime) = startTimers()
+            if timing:
+                (startWallTime, startProcessTime) = startTimers()
 
-            (eligible, options) = self.eligibilityLayer[layer].determineEligibility(polygon)
-            if eligible:
-                for option in options:
-                    df.add(option)
+            if self.eligibilityLayer[layer].determineEligibility(polygon):
+                df.add(self.eligibilityLayer[layer].layer.name)
 
-            (wallTime, processTime) = endTimers(startWallTime, startProcessTime)
+            if timing:
+                (wallTime, processTime) = endTimers(startWallTime, startProcessTime)
 
-            logging.info(f'--- Processed eligibility layer: {self.eligibilityLayer[layer].name}')
-            logging.info(f'--- Wall Time: {wallTime} milliseconds')
-            logging.info(f'--- Process Time: {processTime} milliseconds')
+                logging.info(f'--- Processed eligibility layer: {self.eligibilityLayer[layer].name}')
+                logging.info(f'--- Wall Time: {wallTime} milliseconds')
+                logging.info(f'--- Process Time: {processTime} milliseconds')
 
         return list(df)
 

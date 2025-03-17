@@ -1,1 +1,1 @@
-from mcda.mcda import calculateMultiCriteriaDecisionAnalysisForParcel, multiCriteriaDecisionAnalysisToRows
+from mcda.mcda import calculateMultiCriteriaDecisionAnalysisForParcel, multiCriteriaDecisionAnalysisToRows, calculateMCDAForPriorityScoresWithEligibility

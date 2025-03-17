@@ -92,7 +92,7 @@ def main(polyId: str, wkt: str, layerConfig: str, qeiaMatrix: str):
     (startWallTime, startProcessTime) = startTimers()
     filteredQeia = rawQeia.getFilteredMatrix(eligbility)
     (wallTime, processTime) = endTimers(startWallTime, startProcessTime)
-    print(filteredQeia.createOutputTableRow())
+    print(filteredQeia.createDataFrame())
     logging.info(f'Wall Time: {wallTime} milliseconds')
     logging.info(f'Process Time: {processTime} milliseconds')
 

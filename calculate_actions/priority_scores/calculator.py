@@ -22,7 +22,7 @@ class Calculator:
         """
         self.priorityLayers = priorityLayers
 
-    def calculatePriorityScoreForPolygon(self, polygon: Polygon) -> dict[str, np.floating]:
+    def calculatePriorityScoreForPolygon(self, polygon: Polygon, timing: bool = True) -> dict[str, np.floating]:
         """Calculate the priorty scores for a single polygon against a set of priority layers
 
         Args:
@@ -34,14 +34,42 @@ class Calculator:
         df: dict[str, np.floating] = {}
         
         for layer in self.priorityLayers:
-            (startWallTime, startProcessTime) = startTimers()
+            if timing:
+                (startWallTime, startProcessTime) = startTimers()
 
             df[layer] = self.priorityLayers[layer].calculateScore(polygon)
 
-            (wallTime, processTime) = endTimers(startWallTime, startProcessTime)
+            if timing:
+                (wallTime, processTime) = endTimers(startWallTime, startProcessTime)
 
-            logging.info(f'--- Processed priority layer: {self.priorityLayers[layer].name}')
-            logging.info(f'--- Wall Time: {wallTime} milliseconds')
-            logging.info(f'--- Process Time: {processTime} milliseconds')
+                logging.info(f'--- Processed priority layer: {self.priorityLayers[layer].name}')
+                logging.info(f'--- Wall Time: {wallTime} milliseconds')
+                logging.info(f'--- Process Time: {processTime} milliseconds')
+
+        return df
+
+    def calculatePriorityScoreForPolygonAsArray(self, polygon: Polygon, timing: bool = True) -> list[np.floating]:
+        """Calculate the priorty scores for a single polygon against a set of priority layers
+
+        Args:
+            polygon (Polygon): Input Polygon to intersect with priority layers
+
+        Returns:
+            dict[str, np.floating]: A dict of layer name / score pairs
+        """
+        df: list[np.floating] = []
+        
+        for layer in self.priorityLayers:
+            if timing:
+                (startWallTime, startProcessTime) = startTimers()
+
+            df.append(self.priorityLayers[layer].calculateScore(polygon))
+
+            if timing:
+                (wallTime, processTime) = endTimers(startWallTime, startProcessTime)
+
+                logging.info(f'--- Processed priority layer: {self.priorityLayers[layer].name}')
+                logging.info(f'--- Wall Time: {wallTime} milliseconds')
+                logging.info(f'--- Process Time: {processTime} milliseconds')
 
         return df

@@ -4,3 +4,4 @@ __pycache__
 
 # Hiding local layers from commit so we can work locally
 calculate_actions/*.json
+calculate_actions/*.csv
