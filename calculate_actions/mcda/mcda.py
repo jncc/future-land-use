@@ -32,7 +32,7 @@ def multiCriteriaDecisionAnalysisToRows(mcda: dict[str, dict[str, np.floating]])
 def eligibilityTableToMCDAEligibilityTemplate(eligibilityTable: pd.DataFrame) -> pd.DataFrame:
     eligbilitySeries = eligibilityTable.agg(lambda x: [col for i, col in enumerate(eligibilityTable.columns) if x.iloc[i]], axis=1)
 
-    return pd.DataFrame(eligbilitySeries.explode(), columns=['option']).reset_index()
+    return pd.DataFrame(eligbilitySeries.explode(), columns=['option']).reset_index().dropna(subset=['option'])
 
 def eligibilityTemplateToQEIAMultiplier(eligibilityTemplate: pd.DataFrame, qeia: QEIAMatrix) -> pd.DataFrame:
     qeiaMatrix = qeia.createDataFrame().transpose()

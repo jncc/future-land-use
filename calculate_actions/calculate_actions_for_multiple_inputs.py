@@ -186,18 +186,6 @@ def main(polygonPath: str,
         logging.info(f'Process Time: {processTime} seconds')
     print(optionEligbility)
 
-    # logging.info("Filter QEIA scores eligibility")
-    
-    # (startWallTime, startProcessTime) = startTimers()
-    # filteredQeia = rawQeia.getFilteredMatrix(optionEligbility.loc[:, optionEligbility.any()].columns)
-    # (wallTime, processTime) = endTimers(startWallTime, startProcessTime)
-
-    # logging.info('---------------------------- QEIA Filtering Complete ---------------------------- ')
-    # logging.info(f'Wall Time: {wallTime} milliseconds')
-    # logging.info(f'Process Time: {processTime} milliseconds')
-
-    # print(filteredQeia.createOutputTableRow())
-
     logging.info("Calculate action scores using priorities and QEIA")
     (startWallTime, startProcessTime) = startTimers()
     mcda = calculateMCDAForPriorityScoresWithEligibility(weightedPriorityScores, rawQeia, optionEligbility)
