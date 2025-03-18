@@ -3,10 +3,11 @@ import numpy as np
 import pandas as pd
 
 def createWeightingTable(priorityScores: pd.DataFrame, weightings: dict[str, np.floating]) -> pd.DataFrame:
+    weightingTable = priorityScores.copy()
     for layer in weightings:
-        priorityScores = priorityScores.assign(layer = weightings[layer])
+        weightingTable[layer] = weightings[layer]
 
-    return priorityScores
+    return weightingTable
 
 def calculateWeightedPriorityScores(priorityScores: pd.DataFrame, weightings: dict[str, np.floating]) -> pd.DataFrame:
     weightingTable = createWeightingTable(priorityScores, weightings)

@@ -68,7 +68,6 @@ def main(polygonPath: str,
         weightedPriorityScores = pd.read_csv(precalculatedWeightedPrioirityScores)
         weightedPriorityScores.set_index('id', inplace=True)
     else:
-        logging.info('Calculating priority scores')
         (startWallTime, startProcessTime) = startTimers()
         if precalculatedPriorityScores and Path(precalculatedPriorityScores).exists():
             logging.info('Reading pre-calculated priority scores')
@@ -146,7 +145,7 @@ def main(polygonPath: str,
         raise FileExistsError(f'Output path {mcda_output_path} already exists')
     
     mcda.to_csv(mcda_output_path)
-    
+
     (wallTime, processTime) = endTimers(startWallTime, startProcessTime)
     print(mcda)
     logging.info(f'Wall Time: {wallTime} milliseconds')
@@ -171,15 +170,15 @@ if __name__ == '__main__':
     parser.add_argument('-q', '--qeia_matrix', type=str, required=False, help="Raw QEIA impact score matrix file")
     parser.add_argument('--precalculated_priority_scores', type=str, required=False, help="Optional path precalculated priority scores table as a CSV", default=None)
     parser.add_argument('--priority_score_output_path', type=str, required=False, help="Path to output prioirity scores table as CSV for this run", default="priority_scores.csv")
-    parser.add_argument('--overwrite_priority_score_output', type=bool, required=False, help="Overwrite existing prioirity scores table if it exists", default=False)
+    parser.add_argument('--overwrite_priority_score_output', type=bool, required=False, help="Overwrite existing prioirity scores table if it exists", default=False, action=argparse.BooleanOptionalAction)
     parser.add_argument('--precalculated_weighted_priority_scores', type=str, required=False, help="Optional path precalculated weighted priority scores table as a CSV", default=None)
     parser.add_argument('--weighted_priority_score_output_path', type=str, required=False, help="Path to output prioirity scores table as CSV for this run", default="weighted_priority_scores.csv")
-    parser.add_argument('--overwrite_weighted_priority_score_output', type=bool, required=False, help="Overwrite existing weigthed prioirity scores table if it exists", default=False)
+    parser.add_argument('--overwrite_weighted_priority_score_output', type=bool, required=False, help="Overwrite existing weigthed prioirity scores table if it exists", default=False, action=argparse.BooleanOptionalAction)
     parser.add_argument('--precalculated_eligibility', type=str, required=False, help="Optional path precalculated option eligiblity table as a CSV", default=None)
     parser.add_argument('--eligibility_options_output_path', type=str, required=False, help="Path to output eligibility options table as CSV for this run", default="eligibility.csv")
-    parser.add_argument('--overwrite_eligiblity_output', type=bool, required=False, help="Overwrite existing option eligiblity table if it exists", default=False)
+    parser.add_argument('--overwrite_eligiblity_output', type=bool, required=False, help="Overwrite existing option eligiblity table if it exists", default=False, action=argparse.BooleanOptionalAction)
     parser.add_argument('--mcda_output_path', type=str, required=False, help="Path to output MCDA table as CSV for this run", default="mcda.csv")
-    parser.add_argument('--overwrite_mcda_output', type=bool, required=False, help="Overwrite existing MCDA table if it exists", default=False)
+    parser.add_argument('--overwrite_mcda_output', type=bool, required=False, help="Overwrite existing MCDA table if it exists", default=False, action=argparse.BooleanOptionalAction)
 
     args = parser.parse_args()
 
