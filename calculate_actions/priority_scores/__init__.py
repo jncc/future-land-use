@@ -1,2 +1,2 @@
-from priority_scores.calculator import Calculator
-from priority_scores.weighting import Weighting
+from priority_scores.calculator import calculatePriorityScoresForInputPolygon, calculatePriorityScoresForInputPolygons
+from priority_scores.weighting import calculateWeightedPriorityScores

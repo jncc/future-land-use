@@ -1,1 +1,1 @@
-from eligibility.calculator import Calculator
+from eligibility.calculator import calculateOptionEligibilityForInputPolygon, calculateOptionEligibilityForInputPolygons
