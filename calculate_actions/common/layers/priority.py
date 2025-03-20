@@ -130,14 +130,14 @@ def processPriorityLayers(priorityLayersConfig: dict[str, dict[str, str]]) -> di
             priorityLayers[layer] = PriorityVectorLayer(
                     layer, 
                     priorityLayersConfig[layer]['layer_name'],
-                    Path(priorityLayersConfig[layer]['filename']),
+                    Path(priorityLayersConfig[layer]['filepath']),
                     priorityLayersConfig[layer]['column_name']
                 )
         else:
             priorityLayers[layer] = PriorityVectorLayer(
                     layer, 
                     priorityLayersConfig[layer]['layer_name'],
-                    Path(priorityLayersConfig[layer]['filename']),
+                    Path(priorityLayersConfig[layer]['filepath']),
                 )
 
     return priorityLayers
