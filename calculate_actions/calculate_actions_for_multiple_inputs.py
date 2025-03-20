@@ -40,20 +40,9 @@ def main(polygonPath: str,
         qeiaMatrix (str): Path to a JSON file containing a configuration object for a QEIA matrix to process against
     """
     (totalStartWallTime, totalStartProcessTime) = startTimers()
-
-    priorityLayers: dict[str, PriorityLayer] = {}
-    eligibilityLayers: dict[str, EligibilityLayer] = {}
+    
     with open(layerConfig) as f:
         config = json.load(f)
-        priorityLayers = processPriorityLayers(config['priority_layers'])
-        eligibilityLayers = processEligibilityLayers(config['eligibility_layers'])
-
-    logging.info(f'Found {len(priorityLayers)} priority layers in the config file')
-
-    with open(weightingsConfig) as f:
-        weightings = json.load(f)
-        if not set(weightings.keys()).issuperset(priorityLayers.keys()):
-            raise ValueError('Mismatch between priority layers and weightings')    
 
     with open(qeiaMatrix) as f:
         config = json.load(f)
@@ -81,6 +70,10 @@ def main(polygonPath: str,
                     logging.warning(f'Output path {priorityScoreOutputPath} already exists, exiting')
                     raise FileExistsError(f'Output path {priorityScoreOutputPath} already exists')
             
+            priorityLayers: dict[str, PriorityLayer] = {}
+            priorityLayers = processPriorityLayers(config['priority_layers'])
+            logging.info(f'Found {len(priorityLayers)} priority layers in the config file')
+            
             logging.info('Calculate priority scores')
             priorityScores = calculatePriorityScoresForInputPolygons(Path(polygonPath), priorityLayers, polygonIdColumn)
             priorityScores.to_csv(priorityScoreOutputPath, index=True, index_label='id')
@@ -100,7 +93,12 @@ def main(polygonPath: str,
             else:
                 logging.warning(f'Output path {priorityScoreOutputPath} already exists, exiting')
                 raise FileExistsError(f'Output path {priorityScoreOutputPath} already exists')
-            
+
+        with open(weightingsConfig) as f:
+            weightings = json.load(f)
+            if not set(weightings.keys()).issuperset(priorityLayers.keys()):
+                raise ValueError('Mismatch between priority layers and weightings')
+        
         weightedPriorityScores = calculateWeightedPriorityScores(priorityScores, weightings)
         weightedPriorityScores.to_csv(weightedPriorityScoreOutputPath, index=True, index_label='id')
     
@@ -124,6 +122,10 @@ def main(polygonPath: str,
                 raise FileExistsError(f'Output path {eligibilityScoreOutputPath} already exists')
 
         logging.info('Determining polygon eligibility')
+
+        eligibilityLayers: dict[str, EligibilityLayer] = {}
+        eligibilityLayers = processEligibilityLayers(config['eligibility_layers'])
+        
         (startWallTime, startProcessTime) = startTimers()
 
         optionEligbility = calculateOptionEligibilityForInputPolygons(Path(polygonPath), eligibilityLayers)
