@@ -96,11 +96,11 @@ def processEligibilityLayers(eligibilityLayersConfig: dict[str, dict[str, str]])
         {
             "gs67": {
                 "layer_name": "GS67",
-                "filename": "footprint_GS67.gpkg"
+                "filepath": "footprint_GS67.gpkg"
         },
         "lh1": {
             "layer_name": "LH1",
-            "filename": "footprint_LH1.gpkg"
+            "filepath": "footprint_LH1.gpkg"
         },
         ...
 
@@ -113,6 +113,6 @@ def processEligibilityLayers(eligibilityLayersConfig: dict[str, dict[str, str]])
         eligibilityLayers[layer] = EligibilityVectorLayer(
                 layer, 
                 eligibilityLayersConfig[layer]['layer_name'],
-                Path(eligibilityLayersConfig[layer]['filename']))
+                Path(eligibilityLayersConfig[layer]['filepath']))
 
     return eligibilityLayers
