@@ -13,7 +13,7 @@ from pathlib import Path
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(asctime)s: %(message)s')
 
-def main(polyId: str, wkt: str, layerConfig: str, weightingsConfig: str, qeiaMatrix: str):
+def main(polyId: str, wkt: str, layerConfig: str, weightingsConfig: str, qeiaMatrix: str, output: str):
     """Process a single polygon through to MCDA, using weighted priority scores,
     eligible option layers and an input QEIA matrix
 
@@ -22,6 +22,7 @@ def main(polyId: str, wkt: str, layerConfig: str, weightingsConfig: str, qeiaMat
         wkt (str): A path to a WKT file describing the input polygon as WKT (in the same projection as the eligibility and priority layers)
         layerConfig (str): Path to a JSON file containing a configuration object for layers (priority and eligibility)
         qeiaMatrix (str): Path to a JSON file containing a configuration object for a QEIA matrix to process against
+        output (str): Optional path to store MCDA output to as a .csv file
     """
     (totalStartWallTime, totalStartProcessTime) = startTimers()
     logging.info(f'Generating actions for polygon {polyId} defined in {wkt}')
@@ -100,6 +101,9 @@ def main(polyId: str, wkt: str, layerConfig: str, weightingsConfig: str, qeiaMat
     print(mcda)
     print(mcda.transpose())
 
+    if output:
+        mcda.to_csv(output)
+
     (wallTime, processTime) = endTimers(procStartWallTime, procStartProcessTime, 1)
     logging.info('---------------------------- Processing Complete ---------------------------- ')
     logging.info(f'Wall Time: {wallTime} seconds')
@@ -116,10 +120,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate action scores for a given polygon land parcel")
     parser.add_argument('-i', '--poly_id', type=str, required=True, help="Unique ID for the polygon")
     parser.add_argument('-p', '--polygon_wkt', type=str, required=True, help="WKT file containing polygon geometry")
-    parser.add_argument('-l', '--layer_config', type=str, required=False, default="layers.json", help="JSON file containing priority and eligibility layers")
-    parser.add_argument('-w', '--weightings_config', type=str, required=False, default="weightings.json", help="JSON file containing priority weightings")
-    parser.add_argument('-q', '--qeia_matrix', type=str, required=False, help="Raw QEIA impact score matrix file")
+    parser.add_argument('-l', '--layer_config', type=str, required=True, default="layers.json", help="JSON file containing priority and eligibility layers")
+    parser.add_argument('-w', '--weightings_config', type=str, required=True, default="weightings.json", help="JSON file containing priority weightings")
+    parser.add_argument('-q', '--qeia_matrix', type=str, required=True, help="Raw QEIA impact score matrix file")
+    parser.add_argument('-o', '--output', type=str, required=False, help="Optional filepath to store output MCDA data as a .csv file")
 
     args = parser.parse_args()
 
-    main(args.poly_id, args.polygon_wkt, args.layer_config, args.weightings_config, args.qeia_matrix)
+    main(args.poly_id, args.polygon_wkt, args.layer_config, args.weightings_config, args.qeia_matrix, args.output)
