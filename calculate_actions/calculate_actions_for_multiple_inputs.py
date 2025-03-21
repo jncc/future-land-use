@@ -30,14 +30,31 @@ def main(polygonPath: str,
          overwriteEligibilityScores: bool,
          mcda_output_path: str,
          overwrite_mcda_output: bool):
-    """Process a single polygon through to MCDA, using weighted priority scores,
-    eligible option layers and an input QEIA matrix
+    """Process a a set of input polygons through to MCDA, using weighted priority scores, eligible option layers and 
+    an input QEIA matrix, function will output several intermediate CSV files during the process to help with rerunning
+    the script with different options or pre-constructed inputs.
 
     Args:
-        polyId (str): An ID for this polygon
-        wkt (str): A path to a WKT file describing the input polygon as WKT (in the same projection as the eligibility and priority layers)
+        polygonPath (str): Path to vector input file containing the input polygons, should support most vector formats
+        polygonIdColumn (str): The name of the ID column in the input vector file
         layerConfig (str): Path to a JSON file containing a configuration object for layers (priority and eligibility)
+        weightingsConfig (str): Path to a JSON file containing a configuration object for priority weightings
         qeiaMatrix (str): Path to a JSON file containing a configuration object for a QEIA matrix to process against
+        precalculatedPriorityScores (str): Optional, if not None use this path to load an existing CSV file output of the priority scores
+        priorityScoreOutputPath (str): Path to store intermediate priority scores to as a CSV
+        overwritePriorityScores (bool): Overwrite priority scores file if it already exists
+        precalculatedWeightedPrioirityScores (str): Optional, if not None use this path to load an existing CSV output of weighted priority scores
+        weightedPriorityScoreOutputPath (str): Path to store intermediate weighted priority scores to as a CSV
+        overwriteWeightedPriorityScores (bool): Overwrites weighted priority scores file if it already exists
+        precalculatedEligibility (str): Optional, if not none use this path to load an existing CSV output of eligibilty options per polygon
+        eligibilityScoreOutputPath (str): Path to store intermediate eligibility options for the intput polygons
+        overwriteEligibilityScores (bool): Overwrites the eligibility options CSV file if it already exists
+        mcda_output_path (str): Path to write final MCDA output file to
+        overwrite_mcda_output (bool): Overwrite MCDA file output if it already exists
+
+    Raises:
+        FileExistsError: Raised if a file exists and has not been set to be overwritten
+        ValueError: Raised if the input weightings config is not a superset of the intput priority layers
     """
     (totalStartWallTime, totalStartProcessTime) = startTimers()
     
