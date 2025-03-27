@@ -75,8 +75,12 @@ class PriorityVectorLayer(VectorLayer, PriorityLayer):
         Returns:
             np.floating: The maximum score for this layer intersected with the input polygon
         """
+
         intersectingPolygons = self.dataTable.intersects(polygon)
-        return (self.dataTable.join(intersectingPolygons.rename('intersecting')))[lambda x: x['intersecting']][self.columnName].max()
+        touchingPolygons = self.dataTable.touches(polygon)
+        intersectsNotTouches = self.dataTable[intersectingPolygons & ~touchingPolygons]
+        
+        return intersectsNotTouches[self.columnName].max()
 
 class PriorityRasterLayer(RasterLayer, PriorityLayer):
     """Class for Raster based Priority Layers, extends the RasterLayer and PriorityLayer
