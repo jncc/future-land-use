@@ -65,8 +65,8 @@ class PriorityVectorLayer(VectorLayer, PriorityLayer):
         self.columnName = columnName
     
     def calculateScore(self, polygon: Polygon) -> np.floating:
-        """Calculates the score for this layer interescted with the input Polygon, takes the maximum
-        score value from the columnName column that interescts
+        """Calculates the score for this layer intersected with the input Polygon, takes the maximum
+        score value from the columnName column that intersects, ignoring ones where there is only a touch at the boundary. 
 
         Args:
             polygon (Polygon): A polygon to intersect this layer with
@@ -79,7 +79,6 @@ class PriorityVectorLayer(VectorLayer, PriorityLayer):
         intersectingPolygons = self.dataTable.intersects(polygon)
         touchingPolygons = self.dataTable.touches(polygon)
         intersectsNotTouches = self.dataTable[intersectingPolygons & ~touchingPolygons]
-        
         return intersectsNotTouches[self.columnName].max()
 
 class PriorityRasterLayer(RasterLayer, PriorityLayer):
