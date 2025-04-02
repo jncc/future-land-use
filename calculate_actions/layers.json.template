@@ -2,36 +2,33 @@
     "priority_layers": {
         "drought": {
             "layer_name": "Drought",
-            "filename": "Drought.gpkg",
-            "weighting": 1.23
+            "filepath": "Drought.gpkg"
         },
         "enhancement_of_blue_green_infrastructure": {
             "layer_name": "Enhancement of blue-green infrastructure",
-            "filename": "Enhancement of blue-green infrastructure.gpkg",
-            "weighting": 0.824
+            "filepath": "Enhancement of blue-green infrastructure.gpkg"
         },
         "flooding_nfm": {
             "layer_name": "Flooding - NFM",
-            "filename": "Flooding - NFM.gpkg",
-            "weighting": 1
+            "filepath": "Flooding - NFM.gpkg"
         }
     },
     "eligibility_layers": {
         "gs67": {
             "layer_name": "GS67",
-            "filename": "footprint_GS67.gpkg"
+            "filepath": "footprint_GS67.gpkg"
         },
         "lh1": {
             "layer_name": "LH1",
-            "filename": "footprint_LH1.gpkg"
+            "filepath": "footprint_LH1.gpkg"
         },
         "sw17": {
             "layer_name": "SW17",
-            "filename": "footprint_SW17.gpkg"
+            "filepath": "footprint_SW17.gpkg"
         },
         "sw18": {
             "layer_name": "SW18",
-            "filename": "footprint_SW18.gpkg"
+            "filepath": "footprint_SW18.gpkg"
         }
     }
 }

@@ -1,1 +1,1 @@
-from common.qeia.qeia import QEIAMatrix
+from common.qeia.qeia import QEIAMatrix, Option as QEIAOption

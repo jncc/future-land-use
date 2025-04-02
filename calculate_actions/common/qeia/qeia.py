@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 class Option:
@@ -5,9 +6,9 @@ class Option:
     stores a dict of priority modifiers for use with a weighted priority score
     table
     """
-    priorityModifiers: dict[str, int]
+    priorityModifiers: dict[str, np.floating]
 
-    def __init__(self, priorityModifiers: dict[str, int]):
+    def __init__(self, priorityModifiers: dict[str, np.floating]):
         """Generates an Option for use in a QEIAMatrix Object
 
         Args:
@@ -16,7 +17,7 @@ class Option:
         """
         self.priorityModifiers = priorityModifiers
 
-    def getPriorityModifiers(self) -> dict[str, int]:
+    def getPriorityModifiers(self) -> dict[str, np.floating]:
         """Return the priority score modifiers for this Option
 
         Returns:
@@ -24,7 +25,7 @@ class Option:
         """
         return self.priorityModifiers
 
-    def getPriorityModifier(self, priority: str) -> int:
+    def getPriorityModifier(self, priority: str) -> np.floating:
         """Return a specific priority score modifer if it exists
 
         Args:
@@ -47,12 +48,12 @@ class QEIAMatrix:
     """
     options: dict[str, Option]
 
-    def __init__(self, matrix: dict[str, dict[str, int]]):
+    def __init__(self, matrix: dict[str, dict[str, np.floating]]):
         """Generates a QEIAMatrix object to use when calcuating priority scores
 
         Args:
-            matrix (dict[str, dict[str, int]]): A config dict that contains 
-            option[str], (priority[str], modifier[int]) for this matrix
+            matrix (dict[str, dict[str, np.floating]]): A config dict that contains 
+            option[str], (priority[str], modifier[np.floating]) for this matrix
         """
         self.options = {}
         for option in matrix:
@@ -88,12 +89,12 @@ class QEIAMatrix:
         """
         filteredMatrix: dict[str, dict[str, int]] = {}
         for option in self.options:
-            if option.upper() in eligible:
+            if option in eligible:
                 filteredMatrix[option] = self.options[option].getPriorityModifiers()
         
         return QEIAMatrix(filteredMatrix)
 
-    def createOutputTableRow(self) -> pd.DataFrame:
+    def createDataFrame(self) -> pd.DataFrame:
         """Returns a Pandas dataframe representation of this QEIAMatrix
 
         Returns:
