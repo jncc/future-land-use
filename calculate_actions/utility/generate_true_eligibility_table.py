@@ -26,14 +26,16 @@ def main(polygonPath: str,
     logging.info(f'Found {len(eligibilityLayers.keys())} eligiblity layers in the config file')
 
     polygons = gpd.read_file(polygonPath)
+    polygons.drop_duplicates(subset=polygonIdColumn, keep='first', inplace=True)
     
     df = pd.DataFrame(index=polygons[polygonIdColumn], columns=eligibilityLayers.keys())
     df.index.name = 'id'
 
     for eligibilityLayer in eligibilityLayers:
         df[eligibilityLayer] = True
-    
+
     df.to_csv(eligibilityOutputPath)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate action scores for a given polygon land parcel")
     parser.add_argument('-i', '--poly_source', type=str, required=True, help="Unique ID for the polygon")
