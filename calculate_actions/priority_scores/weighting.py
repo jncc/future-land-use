@@ -1,33 +1,19 @@
-from common.layers import PriorityLayer
 import numpy as np
+import pandas as pd
 
-class Weighting:
-    """Helper class to calculate weighted scores given an input
+def calculateWeightedPriorityScores(priorityScores: pd.DataFrame, weightings: dict[str, np.floating]) -> pd.DataFrame:
+    """Taking in a Priority Scores dataframe, multiply the columns of that dataframe with the matching weighting
+    value from the weightings config object
+
+    Args:
+        priorityScores (pd.DataFrame): Input priority scores dataframe
+        weightings (dict[str, np.floating]): A dictionaty of layer name / modifier pairs
+
+    Returns:
+        pd.DataFrame: A priority score dataframe with the weightings applied
     """
-    priorityLayers: dict[str, PriorityLayer]
+    for layer in priorityScores.columns:
+        weight = np.float64(weightings[layer])
+        priorityScores[layer] = priorityScores[layer].apply(lambda x: x * weight)
 
-    def __init__(self, priorityLayers: dict[str, PriorityLayer]):
-        """Sets the prioirty layers dict object to loop through and calcuate weighted scores
-
-        Args:
-            priorityLayers (dict[str, PriorityLayer]): A dict containig name / priorityLayer pairs
-            to extract the weightings from
-        """
-        self.priorityLayers = priorityLayers
-    
-    def calculateWeightingScores(self, scores: dict[str, np.float64]) -> dict[str, np.floating]:
-        """Calculate the weighted scores for a given set of name / scores
-
-        Args:
-            scores (dict[str, np.float64]): Original scores for each prioirty layer
-
-        Returns:
-            dict[str, np.floating]: Weighted scores for each priority layer
-        """
-        weightedScores: dict[str, np.floating] = {}
-
-        for score in scores:
-            weightedScores[score] = self.priorityLayers[score].calculateWeightedScore(scores[score])
-        
-        return weightedScores
-
+    return priorityScores
