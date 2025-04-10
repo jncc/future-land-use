@@ -2,6 +2,9 @@ from common.layers import RasterLayer, VectorLayer
 from shapely import Polygon
 from pathlib import Path
 import numpy as np
+from rasterstats import zonal_stats
+import pyogrio
+
 
 class PriorityLayer:
     """Base class for Priority Layers, to be overidden by vector or raster implementations
@@ -79,7 +82,7 @@ class PriorityVectorLayer(VectorLayer, PriorityLayer):
 
 class PriorityRasterLayer(RasterLayer, PriorityLayer):
     """Class for Raster based Priority Layers, extends the RasterLayer and PriorityLayer
-    classes for functionality and prototyping. NOT CURRENTLY IMPLEMENTED
+    classes for functionality and prototyping.
     """
 
     def __init__(self, name: str, friendlyName: str, path: Path):
@@ -92,7 +95,8 @@ class PriorityRasterLayer(RasterLayer, PriorityLayer):
             path (Path): The fully path to the vector layer file
             weighting (float, optional): The weighting for this prioirity layer. Defaults to 1.
         """
-        super(PriorityRasterLayer).__init__(name, friendlyName, path)
+        RasterLayer.__init__(self, name, friendlyName, path)
+        PriorityLayer.__init__(self)
 
     def calculateScore(self, polygon: Polygon) -> np.floating:
         """Calculates the score for this layer interescted with the input Polygon, takes the maximum
@@ -104,7 +108,18 @@ class PriorityRasterLayer(RasterLayer, PriorityLayer):
         Returns:
             np.floating: The maximum score for this layer intersected with the input polygon
         """
-        return super().calculateScore(polygon)
+
+        stats = zonal_stats(
+            polygon,
+            str(self.path),
+            stats=["max"],
+        )
+
+        if stats and stats[0] and 'max' in stats[0] and stats[0]['max'] is not None:
+            return np.float64(stats[0]['max'])
+        else:
+            return np.float64(np.nan)
+
 
 def processPriorityLayers(priorityLayersConfig: dict[str, dict[str, str]]) -> dict[str, PriorityLayer]:
     """Process and open a list of priority layers, as vector or raster layers as appropriate,
@@ -129,18 +144,25 @@ def processPriorityLayers(priorityLayersConfig: dict[str, dict[str, str]]) -> di
     priorityLayers: dict[str, PriorityLayer] = {}
     
     for layer in priorityLayersConfig:
-        if 'column_name' in priorityLayersConfig[layer]:
-            priorityLayers[layer] = PriorityVectorLayer(
-                    layer, 
-                    priorityLayersConfig[layer]['layer_name'],
-                    Path(priorityLayersConfig[layer]['filepath']),
-                    priorityLayersConfig[layer]['column_name']
-                )
-        else:
-            priorityLayers[layer] = PriorityVectorLayer(
-                    layer, 
-                    priorityLayersConfig[layer]['layer_name'],
-                    Path(priorityLayersConfig[layer]['filepath']),
-                )
+        if priorityLayersConfig[layer]['type'] == 'vector':
+            if 'column_name' in priorityLayersConfig[layer]:
+                priorityLayers[layer] = PriorityVectorLayer(
+                        layer, 
+                        priorityLayersConfig[layer]['layer_name'],
+                        Path(priorityLayersConfig[layer]['filepath']),
+                        priorityLayersConfig[layer]['column_name']
+                    )
+            else:
+                priorityLayers[layer] = PriorityVectorLayer(
+                        layer, 
+                        priorityLayersConfig[layer]['layer_name'],
+                        Path(priorityLayersConfig[layer]['filepath'])
+                    )
+        elif priorityLayersConfig[layer]['type'] == 'raster':
+            priorityLayers[layer] = PriorityRasterLayer(
+                layer, 
+                priorityLayersConfig[layer]['layer_name'],
+                Path(priorityLayersConfig[layer]['filepath'])
+            )                
 
     return priorityLayers

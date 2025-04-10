@@ -58,14 +58,15 @@ def main(polygonPath: str,
     """
     (totalStartWallTime, totalStartProcessTime) = startTimers()
     
-    with open(layerConfig) as f:
-        config = json.load(f)
-
     with open(qeiaMatrix) as f:
         config = json.load(f)
         rawQeia = QEIAMatrix(config)
 
     logging.info(f'Imported Raw QEIA matrix')
+
+    with open(layerConfig) as f:
+        config = json.load(f)
+
     (procStartWallTime, procStartProcessTime) = startTimers()
 
     if precalculatedWeightedPrioirityScores and Path(precalculatedWeightedPrioirityScores).exists():

@@ -50,9 +50,11 @@ def main(priorityInputPath: str,
     priority.set_index('priority_layer_id', inplace=True)
 
     for layer in priorityConf:
+        path = Path(getPath(priority.loc[layer]['vector'], priority.loc[layer]['placeholder_file_path'], priority.loc[layer]['raster'], priority.loc[layer]['raster_filepath_if_applicable'], priorityBasePath, preferRaster))
         priorityConf[layer] = {
             'layer_name': priority.loc[layer]['service_indicator'],
-            'filepath': getPath(priority.loc[layer]['vector'], priority.loc[layer]['placeholder_file_path'], priority.loc[layer]['raster'], priority.loc[layer]['raster_filepath_if_applicable'], priorityBasePath, preferRaster)
+            'filepath': f'{path}',
+            'type': 'vector' if priority.loc[layer]['vector'] else 'raster'
         }
         
 

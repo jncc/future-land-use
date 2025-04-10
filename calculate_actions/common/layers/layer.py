@@ -1,5 +1,5 @@
 from pathlib import Path
-from io import TextIOWrapper
+import rasterio
 
 class Layer:
     """Contains common config elements and functions for all layers, designed to be used
@@ -88,11 +88,10 @@ class RasterLayer(Layer):
     """A Layer class designed to open and interact with raster data sources on the local
     filesystem
     """
-    filePointer: TextIOWrapper = None
+    dataset: rasterio.DatasetReader
 
     def __init__(self, name, friendlyName, path):
-        """Initialises superclass and opens the current raster layer and returns a file
-        pointer object for use with raster processing libraries
+        """Initialises superclass and prepares for opening the current raster layer with rasterio
 
         Args:
             name (str): A computer friendly name for this layer
@@ -103,18 +102,19 @@ class RasterLayer(Layer):
             FileNotFoundError: If the path does not exist on the filesystem
         """
         super().__init__(name, friendlyName, path)
+        self.dataset = self.openLayer()
     
-    def openLayer(self) -> TextIOWrapper:
-        """Opens the layer and returns the file pointer for use with comparison 
-        operations
+    def openLayer(self):
+        """Opens the layer using rasterio for geospatial raster operations
 
         Returns:
-            TextIOWrapper: File pointer for this layer
+            rasterio.DatasetReader: Rasterio dataset for this layer
         """
-        self.filePointer = open(self.path)
+        return rasterio.open(self.path)
     
     def closeLayer(self):
-        """Closes the filepointer for this layer
+        """Closes the rasterio dataset for this layer
         """
-        self.filePointer.close()
-    
+        if self.dataset:
+            self.dataset.close()
+            self.dataset = None
