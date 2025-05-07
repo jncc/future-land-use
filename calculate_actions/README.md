@@ -81,6 +81,10 @@ a not assesed or unknown impact value.
 
 ## Create local virtual environment
 
+From the `calculate_actions` folder
+
+### Linux
+
 To create a virtual environment to put dependencies into you can run the following;
 
 ```bash
@@ -88,6 +92,34 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
+
+### Windows
+
+To create a virtual environment under windows to put dependencies into you can run the following under command prompt;
+
+```bash
+python -m venv .venv
+```
+Enter the virtual environment from the same folder that you installed the virtualenv file into
+
+```bash
+.venv\Scripts\activate.bat
+```
+
+You should have the name `(.venv)` prepended to your command prompt window to show you are in the virtual environment i.e.;
+
+`(.venv) C:\Repositories\future-land-use\calculate_actions>`
+
+Then install the required packages;
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+To leave the virtual environment close the window or use `deactivate`
+
+**NOTE**: You can potentially run this via powershell, but frequently system admins will lock down running powershell 
+scripts (`activate.ps1`).
 
 ## Process single polygon
 
