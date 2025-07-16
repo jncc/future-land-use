@@ -106,7 +106,10 @@ def calculatePriorityScoresForInputPolygons(polygonSource: Path, prioirityLayers
     Returns:
         pd.DataFrame: A DataFrame containing the priority scores for the input polygon
     """
-    inputParcels = gpd.read_file(polygonSource)
+    if polygonSource.suffix == '.parquet':
+        inputParcels = gpd.read_parquet(polygonSource)
+    else:
+        inputParcels = gpd.read_file(polygonSource)
     priorityCalculator = Calculator(prioirityLayers)
     inputPriorityScores = pd.DataFrame(columns=prioirityLayers.keys())
     inputPriorityScores.index.name = 'id'

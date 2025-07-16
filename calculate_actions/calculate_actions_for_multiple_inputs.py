@@ -1,6 +1,7 @@
 import json
 import argparse
 import logging
+import shapely
 
 from common.layers import EligibilityLayer, PriorityLayer, processEligibilityLayers, processPriorityLayers
 from common.timing import startTimers, endTimers
@@ -10,6 +11,7 @@ from eligibility import calculateOptionEligibilityForInputPolygons
 from mcda import calculateMCDAForPriorityScoresWithEligibility
 from pathlib import Path
 import pandas as pd
+import numpy as np
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(asctime)s: %(message)s')
     
@@ -128,8 +130,15 @@ def main(polygonPath: str,
 
     if precalculatedEligibility and Path(precalculatedEligibility).exists():
         logging.info('Reading pre-calculated eligibility options')
-        optionEligbility = pd.read_csv(precalculatedEligibility)
-        optionEligbility.set_index('id', inplace=True)
+        if Path(precalculatedEligibility).suffix == '.parquet':
+            logging.info('Pre-calculated eligibility options is in parquet format, reading as such assuming RPA input')
+            optionEligbility = pd.read_parquet(precalculatedEligibility)
+            optionEligbility.drop(['id_business'], inplace=True)
+            optionEligbility.map(lambda x: not np.isnan(x), inplace=True)
+            optionEligbility.index.names = ['id']
+        else:
+            optionEligbility = pd.read_csv(precalculatedEligibility)
+            optionEligbility.set_index('id', inplace=True)
     else:
         if Path(eligibilityScoreOutputPath).exists():
             if overwriteEligibilityScores:
@@ -182,7 +191,7 @@ def main(polygonPath: str,
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate action scores for a given polygon land parcel")
-    parser.add_argument('-i', '--poly_source', type=str, required=True, help="Path to input file containing polygons in area of interest")
+    parser.add_argument('-i', '--poly_source', type=str, required=True, help="Unique ID for the polygon")
     parser.add_argument('-c', '--polygon_id_column', type=str, required=False, default="NGC", help="Column name for the polygon ID")
     parser.add_argument('-l', '--layer_config', type=str, required=False, default="layers.json", help="JSON file containing priority and eligibility layers")
     parser.add_argument('-w', '--weightings_config', type=str, required=False, default="weightings.json", help="JSON file containing priority weightings")
