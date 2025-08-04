@@ -1,5 +1,6 @@
 from common.qeia import QEIAMatrix
 import pandas as pd
+import re
 
 def eligibilityTableToMCDAEligibilityTemplate(eligibilityTable: pd.DataFrame) -> pd.DataFrame:
     """Creates a template dataframe for MCDA calculations from an eligibility table, to allow us
@@ -37,7 +38,7 @@ def eligibilityTemplateToQEIAMultiplier(eligibilityTemplate: pd.DataFrame, qeia:
 
     return eligibilityTemplate.merge(qeiaMatrix, on='option').set_index(['id', 'option'])
 
-def calculateMCDAForPriorityScoresWithEligibility(priorityScores: pd.DataFrame, qeia: QEIAMatrix, eligibility: pd.DataFrame) -> pd.DataFrame:
+def calculateMCDAForPriorityScoresWithEligibility(priorityScores: pd.DataFrame, qeia: QEIAMatrix, eligibility: pd.DataFrame, activeServicesMatrixPath: str = "", activeServicesScorePath: str = "") -> pd.DataFrame:
     """Calcualate the MCDA outputs for a supplied set of priority scores, QEIA matrix and eligibility table
 
     Args:
@@ -48,12 +49,47 @@ def calculateMCDAForPriorityScoresWithEligibility(priorityScores: pd.DataFrame, 
     Returns:
         pd.DataFrame: A finalised MCDA table with total/rank for each input polygon ID
     """
-    template = eligibilityTableToMCDAEligibilityTemplate(eligibility)
+    
+    template = eligibilityTableToMCDAEligibilityTemplate(eligibility[eligibility.index.isin(priorityScores.index)])
     qeiaMultiplier = eligibilityTemplateToQEIAMultiplier(template, qeia)
+    
+    ecosystemServices = sorted(set([re.match(r"Priority_(\w+)_\w+",x).group(1) for x in priorityScores.columns]))
+    
+    ecosystemServiceApplicable = pd.DataFrame({'id': priorityScores.index})
+    ecosystemServiceApplicable.set_index('id', inplace=True)
+
+    for service in ecosystemServices:
+        serviceColumn = priorityScores.columns[priorityScores.columns.str.startswith(f'Priority_{service}_')]
+        if serviceColumn.empty:
+            raise ValueError(f'No priority scores columns found for service {service} in {priorityScores.columns.tolist()}')
+        ecosystemServiceApplicable[service] = priorityScores[serviceColumn].notna().any(axis = 1)
+
+    ecosystemServiceApplicable['totalServices'] = ecosystemServiceApplicable.sum(axis=1)
+
+    if activeServicesMatrixPath.strip():
+        print(ecosystemServiceApplicable)
+        ecosystemServiceApplicable.to_csv(activeServicesMatrixPath, index=True) 
+    
     mcda = priorityScores.merge(template, on='id')
-    mcda.set_index(['id', 'option'], inplace=True)   
-    mcda = mcda.mul(qeiaMultiplier)
-    mcda['total'] = mcda.sum(axis=1)
+    mcda = mcda.merge(ecosystemServiceApplicable['totalServices'], on='id', how='left')
+    mcda.set_index(['id', 'option'], inplace=True)
+
+    data_columns = mcda.columns.difference(['id', 'option', 'totalServices'])
+    mcda = mcda.apply(lambda row: (1 / row['totalServices']) * row[data_columns], axis=1)
+    mcda['serviceSum'] = mcda[data_columns].sum(axis=1)
+
+    mcda = mcda.apply(lambda row: row[data_columns] / row['serviceSum'], axis=1)
+
+    print(activeServicesScorePath)
+    if activeServicesScorePath.strip():
+        activeServicesScore = mcda.reset_index().drop(columns=['option']).drop_duplicates().set_index('id')
+        activeServicesScore['total'] = activeServicesScore[data_columns].sum(axis=1)
+        print(activeServicesScore)
+        activeServicesScore.to_csv(activeServicesScorePath, index=True)
+
+    mcda = mcda[data_columns].mul(qeiaMultiplier)    
+
+    mcda['total'] = mcda[data_columns].sum(axis=1)
     mcda['rank'] = mcda.groupby(level=0)['total'].rank(method='first', ascending=False)
 
     return mcda.sort_values(['id', 'rank'])
