@@ -22,13 +22,12 @@ def templateToQEIAMultiplier(template: pd.DataFrame, qeia: QEIAMatrix) -> pd.Dat
 
     return template
 
-def calculateMCDAForPriorityScoresWithEligibility(priorityScores: pd.DataFrame, qeia: QEIAMatrix, eligibility: pd.DataFrame, activeServicesMatrixPath: str = "") -> pd.DataFrame:
+def calculateMCDAForPriorityScoresWithEligibility(priorityScores: pd.DataFrame, qeia: QEIAMatrix) -> pd.DataFrame:
     """Calcualate the MCDA outputs for a supplied set of priority scores, QEIA matrix and eligibility table
 
     Args:
         priorityScores (pd.DataFrame): Dataframe containing the priority scores for each input polygon ID
         qeia (QEIAMatrix): The QEIA matrix to use for this MCDA calculation
-        eligibility (pd.DataFrame): The base eligibility table for each input polygon ID
 
     Returns:
         pd.DataFrame: A finalised MCDA table with total/rank for each input polygon ID

@@ -246,7 +246,7 @@ def main(polygonPath: str,
 
     logging.info("Calculate action scores using priorities and QEIA")
     (startWallTime, startProcessTime) = startTimers()
-    mcda = calculateMCDAForPriorityScoresWithEligibility(weightedPriorityScores, rawQeia, optionEligbility, activeServicesMatrixPath)
+    mcda = calculateMCDAForPriorityScoresWithEligibility(weightedPriorityScores, rawQeia)
 
     if Path(mcda_output_path).exists() and not overwrite_mcda_output:
         logging.warning(f'Output path {mcda_output_path} already exists, exiting')
