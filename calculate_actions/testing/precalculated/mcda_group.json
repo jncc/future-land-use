@@ -1,0 +1,17 @@
+{
+    "Priority_Biod_MaintainSNH": {
+        "operation": "MAX",
+        "options": {   
+            "OPT1": [
+                "BBG"
+            ],
+            "OPT2": [
+                "LCG"
+            ],
+            "OPT3": [
+                "BBG",
+                "LCG"
+            ]
+        }
+    }
+}
