@@ -1,0 +1,26 @@
+{
+    "Priority_Biod_MaintainSNH": {
+        "operation": "MAX",
+        "options": {   
+            "OPT1": [
+                "LCG"
+            ],
+            "OPT2": [
+                "TNB",
+                "SRE"
+            ]
+        }
+    },
+    "Priority_Biod_EnhanceSNH": {
+        "operation": "MAX",
+        "options": {
+            "OPT1": [
+                "LCG"
+            ],
+            "OPT2": [
+                "TNB",
+                "SRE"
+            ]
+        }
+    }
+}
