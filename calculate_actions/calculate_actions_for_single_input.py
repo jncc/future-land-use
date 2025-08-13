@@ -6,7 +6,7 @@ import shapely
 from common.layers import EligibilityLayer, PriorityLayer, processEligibilityLayers, processPriorityLayers
 from common.timing import startTimers, endTimers
 from common.qeia import QEIAMatrix
-from priority_scores import calculatePriorityScoresForInputPolygon, calculateWeightedPriorityScores
+from priority_scores import extractPriorityScoresForInputPolygon, calculateWeightedPriorityScores
 from eligibility import calculateOptionEligibilityForInputPolygon
 from mcda import calculateMCDAForPriorityScoresWithEligibility
 from pathlib import Path
@@ -58,7 +58,7 @@ def main(polyId: str, wkt: str, layerConfig: str, weightingsConfig: str, qeiaMat
     (startWallTime, startProcessTime) = startTimers()
 
     logging.info('Calculate priority scores')
-    priorityScores = calculatePriorityScoresForInputPolygon(polyId, polygon, priorityLayers)
+    priorityScores = extractPriorityScoresForInputPolygon(polyId, polygon, priorityLayers)
     
     (wallTime, processTime) = endTimers(startWallTime, startProcessTime, 1)
     logging.info('---------------------------- Priority Scores Complete ---------------------------- ')

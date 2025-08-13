@@ -3,8 +3,6 @@ from shapely import Polygon
 from pathlib import Path
 import numpy as np
 from rasterstats import zonal_stats
-import pyogrio
-
 
 class PriorityLayer:
     """Base class for Priority Layers, to be overidden by vector or raster implementations
@@ -16,7 +14,7 @@ class PriorityLayer:
         """
         pass
 
-    def calculateScore(self, polygon: Polygon) -> np.floating:
+    def extractScore(self, polygon: Polygon) -> np.floating:
         """Calculate the score of this layer against a supplied polygon
 
         Args:
@@ -29,19 +27,6 @@ class PriorityLayer:
             np.floating: Returns the maxium score for this layer and a supplied polygon
         """
         raise NotImplementedError('calculateScore function is not implemented in PriorityLayer class')
-    
-    def calculateWeightedScore(self, score: np.floating, weighting: np.floating = 1, decimalPlaces: int = 2) -> np.floating:
-        """Calculate a weighted score for this layer to a set number of decimal places
-
-        Args:
-            score (np.floating): An input float (typically an integer)
-            weighting (np.floating, optional): The weighting for this prioirity layer. Defaults to 1.
-            decimalPlaces (int, optional): How many decimal places to round scores to. Defaults to 2.
-
-        Returns:
-            np.floating: A score that has been multipled by the weighting for this layer
-        """
-        return np.round(np.float64(score * weighting), decimalPlaces)
 
 class PriorityVectorLayer(VectorLayer, PriorityLayer):   
     """Class for Vector based Priority Layers, extends the VectorLayer and PriorityLayer
@@ -63,7 +48,7 @@ class PriorityVectorLayer(VectorLayer, PriorityLayer):
         PriorityLayer.__init__(self)
         self.columnName = columnName
     
-    def calculateScore(self, polygon: Polygon) -> np.floating:
+    def extractScore(self, polygon: Polygon) -> np.floating:
         """Calculates the score for this layer intersected with the input Polygon, takes the maximum
         score value from the columnName column that intersects, ignoring ones where there is only a touch at the boundary. 
 
@@ -98,7 +83,7 @@ class PriorityRasterLayer(RasterLayer, PriorityLayer):
         RasterLayer.__init__(self, name, friendlyName, path)
         PriorityLayer.__init__(self)
 
-    def calculateScore(self, polygon: Polygon) -> np.floating:
+    def extractScore(self, polygon: Polygon) -> np.floating:
         """Calculates the score for this layer interescted with the input Polygon, takes the maximum
         score value from the input raster via zonal stats
 

@@ -1,0 +1,34 @@
+{
+    "priority_layers": {
+        "Priority_AirP_ReducedNH3": {
+            "layer_name": "Drought",
+            "filepath": "not_here.gpkg"
+        },
+        "Priority_Biod_MaintainSNH_BBG": {
+            "layer_name": "Maintenance of semi-natural habitats - Blanket Bog",
+            "filepath": "not_here.gpkg"
+        },
+        "Priority_Biod_MaintainSNH_LCG": {
+            "layer_name": "Maintenance of semi-natural habitats - Lowland Calcareous Grassland",
+            "filepath": "not_here.gpkg"
+        },
+        "Priority_RivEro_RiverErosion": {
+            "layer_name": "River erosion",
+            "filepath": "not_here.gpkg"
+        }
+    },
+    "eligibility_layers": {
+        "OPT1": {
+            "layer_name": "OPT1",
+            "filepath": "not_here.gpkg"
+        },
+        "OPT2": {
+            "layer_name": "OPT2",
+            "filepath": "not_here.gpkg"
+        },
+        "OPT3": {
+            "layer_name": "OPT3",
+            "filepath": "not_here.gpkg"
+        }
+    }
+}

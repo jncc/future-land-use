@@ -1,0 +1,17 @@
+{
+    "OPT1": {
+        "Priority_AirP_ReducedNH3": 3,
+        "Priority_Biod_MaintainSNH": 2,
+        "Priority_RivEro_RiverErosion": -1
+    },
+    "OPT2": {
+        "Priority_AirP_ReducedNH3": 2,
+        "Priority_Biod_MaintainSNH": 1,
+        "Priority_RivEro_RiverErosion": 0
+    },
+    "OPT3": {
+        "Priority_AirP_ReducedNH3": 1,
+        "Priority_Biod_MaintainSNH": 2,
+        "Priority_RivEro_RiverErosion": 0
+    }
+}
