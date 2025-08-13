@@ -121,31 +121,6 @@ def main(polygonPath: str,
         logging.info(f'Wall Time: {wallTime} seconds')
         logging.info(f'Process Time: {processTime} seconds')
 
-        # logging.info('Calculating weighted priority scores')
-        # (startWallTime, startProcessTime) = startTimers()
-
-        # if (Path(weightedPriorityScoreOutputPath).exists()):
-        #     if overwriteWeightedPriorityScores:
-        #         logging.warning(f'Output path {priorityScoreOutputPath} already exists, overwriting')
-        #     else:
-        #         logging.warning(f'Output path {priorityScoreOutputPath} already exists, exiting')
-        #         raise FileExistsError(f'Output path {priorityScoreOutputPath} already exists')
-
-        # with open(weightingsConfig) as f:
-        #     weightings = json.load(f)
-        #     if not set(weightings.keys()).issuperset(priorityScores.keys()):
-        #         raise ValueError('Mismatch between priority layers and weightings')
-        
-        # weightedPriorityScores = calculateWeightedPriorityScores(priorityScores, weightings)
-        # weightedPriorityScores.to_csv(weightedPriorityScoreOutputPath, index=True, index_label='id')
-    
-        # (wallTime, processTime) = endTimers(startWallTime, startProcessTime)
-
-        # logging.info('---------------------------- Weighted Priority Scores Complete ---------------------------- ')
-        # logging.info(f'Wall Time: {wallTime} milliseconds')
-        # logging.info(f'Process Time: {processTime} milliseconds')
-        # print(weightedPriorityScores)
-
     if precalculatedEligibility and Path(precalculatedEligibility).exists():
         logging.info('Reading pre-calculated eligibility options')
         if Path(precalculatedEligibility).suffix == '.parquet':
