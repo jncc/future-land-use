@@ -22,7 +22,7 @@ def templateToQEIAMultiplier(template: pd.DataFrame, qeia: QEIAMatrix) -> pd.Dat
 
     return template
 
-def calculateMCDAForPriorityScoresWithEligibility(priorityScores: pd.DataFrame, qeia: QEIAMatrix, eligibility: pd.DataFrame, activeServicesMatrixPath: str = "", activeServicesScorePath: str = "") -> pd.DataFrame:
+def calculateMCDAForPriorityScoresWithEligibility(priorityScores: pd.DataFrame, qeia: QEIAMatrix, eligibility: pd.DataFrame, activeServicesMatrixPath: str = "") -> pd.DataFrame:
     """Calcualate the MCDA outputs for a supplied set of priority scores, QEIA matrix and eligibility table
 
     Args:
@@ -35,11 +35,7 @@ def calculateMCDAForPriorityScoresWithEligibility(priorityScores: pd.DataFrame, 
     """
     
     qeiaMultiplier = templateToQEIAMultiplier(priorityScores.copy(), qeia)
-    print(qeiaMultiplier)
-
     mcda = priorityScores.mul(qeiaMultiplier)
-    print(mcda)
-
     mcda['total'] = mcda.sum(axis=1)
     mcda['rank'] = mcda.groupby(level=0)['total'].rank(method='first', ascending=False)
 
