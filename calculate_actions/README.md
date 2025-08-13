@@ -15,14 +15,16 @@ the form:
     "priority_layers": {
         "unique_layer_id": {
             "layer_name": "Human friendly name",
-            "filepath": "path/to/file.ext"
+            "filepath": "path/to/file.ext",
+            "type": "vector"  // or "raster" for raster files
         },
         ...
     },
     "eligibility_layers": {
         "unique_layer_id": {
             "layer_name": "Human friendly name",
-            "filepath": "path/to/file.ext"
+            "filepath": "path/to/file.ext",
+            "type": "vector"  // or "raster" for raster files
         },
         ...
     }
@@ -37,11 +39,68 @@ For each prority layer an entry should be added under the `priority_layers` obje
 can be a vector (i.e. `.gpkg`) or a raster file (i.e. `.tif`). Each needs to have a unqiue ID label and should have a 
 unique `layer_name` and `filepath`.
 
+Priority layer labels should be in the form of `Priority_{EcosystemServiceGroup}_{Action}` where EcosystemServiceGroup is the
+abbreviated name of the ecosystem service group (i.e. `Biod` for Biodiversity) and Action is the abbreviated name of the action
+(i.e. `MaintainSNH` for Maintain Semi-Natural Habitats).
+
 #### Eligibility Layers
 
 For each prority layer an entry should be added under the `priority_layers` object in the configuation JSON file, this
 can be a vector (i.e. `.gpkg`), currently raster eligibilty layers are not supported. Each needs to have a unqiue ID 
 label and should have a unique `layer_name` and `filepath`.
+
+Eligibility layer labels currently do not have a specific format, but should be short, unique and descriptive of the layer, i.e.
+`GS6`, `LH1`, `SW17`, `SW18` etc.
+
+### Column Aggregation
+
+There are some priority layers that should be aggregated together to prevent them from There is a template file for column aggregation `column_aggregation.json.template`, this contains an example of how to 
+aggregate the values of the priority layers for each polygon, this is in the form:
+
+```json
+{
+    {
+        "priority_layer_group_label": {
+            "operation": "MAX",
+            "options": {   
+                "eligibility_option_label": [
+                    "priority_layer_group_item_label",
+                    ...
+                ],
+                ...
+            }
+        },
+        ...
+    }
+}
+```
+
+Where each line the `priority_layer_group_label` matches an entry in the pattern for a group of priority layers  in the config 
+file described above.
+
+For example if you have a group of priority layers that are all related to maintainging semi-natural habitats, you could have a 
+group label of `Priority_Biod_MaintainSNH` (`Biod` being the ecosystem service group, `MaintainSNH` being the action) and then have a
+set of Priority Layers such as `Priority_Biod_MaintainSNH_LCG`, `Priority_Biod_MaintainSNH_BBG` etc. which could present as;
+
+```json
+{
+    "Priority_Biod_MaintainSNH": {
+        "operation": "MAX",
+        "options": {
+            "OPT1": [
+                "LCG"
+            ],
+            "OPT2": [
+                "LCG",
+                "BBG"
+            ]
+        }
+    }
+}
+```
+
+The `operation` can be one of `MAX`, `MIN`, `AVG` more operations may be added in the future, but the commonly used one is currently 
+`MAX` to get the maximum value for each polygon across the priority layers in the group.
 
 ### Weightings
 
@@ -162,14 +221,26 @@ This will output a CSV with the MCDA output to `mcda.csv` as well as intermediat
  - `--weighted_priority_score_output_path {path}` - [**Optional**] Path to store calculated weighted priority scores out to as CSV [Default: `weighted_priority_scores.csv`]
  - `--overwrite_weighted_priority_score_output` - [**Optional**] Overwrite weighted priority score output if it exists [Default: False]
  - `--precalculated_eligibility {path}` - [**Optional**] Path to CSV containing precalculated eligiblity options for polygons (skipping eligibility option step if this argument is present)
+ - `--precalculated_eligibility_as_area {path}` - [**Optional**] Path to CSV containing precalculated eligiblity options as area for polygons (skipping eligibility option step if this argument is present)
  - `--eligibility_options_output_path {path}` - [**Optional**] Path to store calculated eligibilty options as CSV [Default: `eligibility.csv`]
  - `--overwrite_eligiblity_output` - [**Optional**] Overwrite eligibility option output if it exists [Default: False]
+ - `--column_group_config_path` - [**Optional**] Path to a JSON file containing a configuration object for column group aggregation, if blank, no aggregation will be performed [Default: ]
+ - `--active_services_matrix_path` - [**Optional**] Path to output active services matrix as CSV for this run, if blank dont write [Default: ]
+ - `--active_services_scores_path` - [**Optional**] Path to output active services scores as CSV for this run, if blank dont write [Default: ]
  - `--mcda_output_path {path}` - [**Optional**] Path to store output CSV of the MCDA analysis step [Default: `mcda.csv`]
  - `--overwrite_mcda_output` - [**Optional**] Overwrite MCDA output if it exists [Default: False]
 
  You can use the `--precalculated_x` arguments to input previously run outputs for the relevant steps to speed up processing while adjusting elements of the inputs.
 
  ## Utility Scripts
+
+ ### Test Score Calculation
+
+ We have included a basic test set of data to do a simple test of the score calculation, this can be run with the following command;
+
+ ```bash
+python calculate_actions_for_multiple_inputs.py -c id -i ./testing/precalculated/layers.json  -l ./testing/precalculated/layers.json -w ./testing/precalculated/weightings.json -q ./testing/precalculated/qeia.json --precalculated_priority_scores ./testing/precalculated/priority_scores.csv --precalculated_eligibility ./testing/precalculated/eligibility_options.csv --column_group_config_path ./testing/precalculated/column_aggregation.json --active_services_matrix_path ./testing/precalculated/active_services_matrix.csv --mcda_output_path ./testing/precalculated/mcda.csv --overwrite_mcda_output --overwrite_weighted_priority_score_output
+```
 
  ### Pregenerated Eligibility Options (Force True)
 

@@ -81,7 +81,6 @@ def calculateInitialPriorityScoreWeighting(priorityScores: pd.DataFrame) -> pd.D
     data_columns = priorityScores.columns.difference(['id', 'option', 'totalServices'])
     priorityScores = priorityScores.apply(lambda row: (1 / row['totalServices']) * row[data_columns], axis=1)
     priorityScores['serviceSum'] = priorityScores[data_columns].sum(axis=1)
-    print(priorityScores)
 
     return priorityScores.apply(lambda row: row[data_columns] / row['serviceSum'], axis=1).drop(columns=['serviceSum','totalServices'], errors='ignore')
 

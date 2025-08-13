@@ -31,7 +31,6 @@ def main(polygonPath: str,
          overwriteEligibilityScores: bool,
          columnGroupConfigPath: str,
          activeServicesMatrixPath: str,
-         activeServicesScorePath: str,
          mcda_output_path: str,
          overwrite_mcda_output: bool):
     """Process a a set of input polygons through to MCDA, using weighted priority scores, eligible option layers and 
@@ -56,7 +55,6 @@ def main(polygonPath: str,
         overwriteEligibilityScores (bool): Overwrites the eligibility options CSV file if it already exists
         columnGroupConfigPath (str): Path to a JSON file containing a configuration object for column group aggregation
         activeServicesMatrixPath (str): Path to store the active services matrix as a CSV, if blank dont write
-        activeServicesScorePath (str): Path to store the active services scores as a CSV, if blank dont write
         mcda_output_path (str): Path to write final MCDA output file to
         overwrite_mcda_output (bool): Overwrite MCDA file output if it already exists
 
@@ -122,31 +120,6 @@ def main(polygonPath: str,
         logging.info('---------------------------- Active Serices Calculation Complete ---------------------------- ')
         logging.info(f'Wall Time: {wallTime} seconds')
         logging.info(f'Process Time: {processTime} seconds')
-
-        # logging.info('Calculating weighted priority scores')
-        # (startWallTime, startProcessTime) = startTimers()
-
-        # if (Path(weightedPriorityScoreOutputPath).exists()):
-        #     if overwriteWeightedPriorityScores:
-        #         logging.warning(f'Output path {priorityScoreOutputPath} already exists, overwriting')
-        #     else:
-        #         logging.warning(f'Output path {priorityScoreOutputPath} already exists, exiting')
-        #         raise FileExistsError(f'Output path {priorityScoreOutputPath} already exists')
-
-        # with open(weightingsConfig) as f:
-        #     weightings = json.load(f)
-        #     if not set(weightings.keys()).issuperset(priorityScores.keys()):
-        #         raise ValueError('Mismatch between priority layers and weightings')
-        
-        # weightedPriorityScores = calculateWeightedPriorityScores(priorityScores, weightings)
-        # weightedPriorityScores.to_csv(weightedPriorityScoreOutputPath, index=True, index_label='id')
-    
-        # (wallTime, processTime) = endTimers(startWallTime, startProcessTime)
-
-        # logging.info('---------------------------- Weighted Priority Scores Complete ---------------------------- ')
-        # logging.info(f'Wall Time: {wallTime} milliseconds')
-        # logging.info(f'Process Time: {processTime} milliseconds')
-        # print(weightedPriorityScores)
 
     if precalculatedEligibility and Path(precalculatedEligibility).exists():
         logging.info('Reading pre-calculated eligibility options')
@@ -248,7 +221,7 @@ def main(polygonPath: str,
 
     logging.info("Calculate action scores using priorities and QEIA")
     (startWallTime, startProcessTime) = startTimers()
-    mcda = calculateMCDAForPriorityScoresWithEligibility(weightedPriorityScores, rawQeia, optionEligbility, activeServicesMatrixPath, activeServicesScorePath)
+    mcda = calculateMCDAForPriorityScoresWithEligibility(weightedPriorityScores, rawQeia)
 
     if Path(mcda_output_path).exists() and not overwrite_mcda_output:
         logging.warning(f'Output path {mcda_output_path} already exists, exiting')
@@ -289,7 +262,6 @@ if __name__ == '__main__':
     parser.add_argument('--eligibility_options_output_path', type=str, required=False, help="Path to output eligibility options table as CSV for this run", default="eligibility.csv")
     parser.add_argument('--column_group_config_path', type=str, required=False, help="Path to a JSON file containing a configuration object for column group aggregation", default="")
     parser.add_argument('--active_services_matrix_path', type=str, required=False, help="Path to output active services matrix as CSV for this run, if blank dont write", default="")
-    parser.add_argument('--active_services_scores_path', type=str, required=False, help="Path to output active services scores as CSV for this run, if blank dont write", default="")
     parser.add_argument('--overwrite_eligiblity_output', type=bool, required=False, help="Overwrite existing option eligiblity table if it exists", default=False, action=argparse.BooleanOptionalAction)
     parser.add_argument('--mcda_output_path', type=str, required=False, help="Path to output MCDA table as CSV for this run", default="mcda.csv")
     parser.add_argument('--overwrite_mcda_output', type=bool, required=False, help="Overwrite existing MCDA table if it exists", default=False, action=argparse.BooleanOptionalAction)
@@ -314,7 +286,6 @@ if __name__ == '__main__':
         args.overwrite_eligiblity_output,
         args.column_group_config_path,
         args.active_services_matrix_path,
-        args.active_services_scores_path,
         args.mcda_output_path,
         args.overwrite_mcda_output
     )
