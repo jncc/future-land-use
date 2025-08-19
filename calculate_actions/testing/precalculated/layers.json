@@ -18,15 +18,15 @@
         }
     },
     "eligibility_layers": {
-        "OPT1": {
+        "Eligibility_OPT1": {
             "layer_name": "OPT1",
             "filepath": "not_here.gpkg"
         },
-        "OPT2": {
+        "Eligibility_OPT2": {
             "layer_name": "OPT2",
             "filepath": "not_here.gpkg"
         },
-        "OPT3": {
+        "Eligibility_OPT3": {
             "layer_name": "OPT3",
             "filepath": "not_here.gpkg"
         }

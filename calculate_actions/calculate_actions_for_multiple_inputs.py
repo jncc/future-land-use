@@ -33,7 +33,7 @@ def main(polygonPath: str,
          activeServicesMatrixPath: str,
          mcda_output_path: str,
          overwrite_mcda_output: bool):
-    """Process a a set of input polygons through to MCDA, using weighted priority scores, eligible option layers and 
+    '''Process a a set of input polygons through to MCDA, using weighted priority scores, eligible option layers and 
     an input QEIA matrix, function will output several intermediate CSV files during the process to help with rerunning
     the script with different options or pre-constructed inputs.
 
@@ -61,7 +61,7 @@ def main(polygonPath: str,
     Raises:
         FileExistsError: Raised if a file exists and has not been set to be overwritten
         ValueError: Raised if the input weightings config is not a superset of the intput priority layers
-    """
+    '''
     (totalStartWallTime, totalStartProcessTime) = startTimers()
     
     with open(qeiaMatrix) as f:
@@ -113,7 +113,7 @@ def main(polygonPath: str,
         (startWallTime, startProcessTime) = startTimers()
         logging.info('Calculating active services from priority scores')
 
-        activeServicesMatrix = calculateActiveServices(priorityScores, activeServicesMatrixPath, activeServicesMatrixPath.strip() != "")
+        activeServicesMatrix = calculateActiveServices(priorityScores, activeServicesMatrixPath, activeServicesMatrixPath.strip() != '')
         activeServicesMatrix.drop(activeServicesMatrix.columns.difference(['id', 'totalServices']), axis=1, inplace=True)
 
         priorityScores = priorityScores.merge(activeServicesMatrix, on='id', how='left')
@@ -134,12 +134,13 @@ def main(polygonPath: str,
         if Path(precalculatedEligibilityAsArea).suffix == '.parquet':
             logging.info('Pre-calculated eligibility options as area is in parquet format, reading as such assuming RPA input')
             optionEligbilityAreas = pd.read_parquet(precalculatedEligibilityAsArea)
-            optionEligbilityAreas.drop(['id_business'], axis=1, inplace=True)
+            optionEligbilityAreas.set_index('id_parcel', inplace=True)
+            # Convert to boolean options
             optionEligbility = optionEligbilityAreas.map(lambda x: not np.isnan(x))
             optionEligbility.index.names = ['id']
         else:
             optionEligbilityAreas = pd.read_csv(precalculatedEligibilityAsArea)
-            optionEligbilityAreas.set_index('id', inplace=True)
+            optionEligbilityAreas.set_index('id_parcel', inplace=True)
             optionEligbility = optionEligbilityAreas.map(lambda x: not np.isnan(x))
     else:
         if Path(eligibilityScoreOutputPath).exists():
@@ -219,7 +220,7 @@ def main(polygonPath: str,
     logging.info(f'Wall Time: {wallTime} seconds')
     logging.info(f'Process Time: {processTime} seconds')
 
-    logging.info("Calculate action scores using priorities and QEIA")
+    logging.info('Calculate action scores using priorities and QEIA')
     (startWallTime, startProcessTime) = startTimers()
     mcda = calculateMCDAForPriorityScoresWithEligibility(weightedPriorityScores, rawQeia)
 
@@ -245,26 +246,27 @@ def main(polygonPath: str,
     logging.info(f'Process Time: {processTime} seconds')
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Generate action scores for a given polygon land parcel")
-    parser.add_argument('-i', '--poly_source', type=str, required=True, help="Unique ID for the polygon")
-    parser.add_argument('-c', '--polygon_id_column', type=str, required=False, default="NGC", help="Column name for the polygon ID")
-    parser.add_argument('-l', '--layer_config', type=str, required=False, default="layers.json", help="JSON file containing priority and eligibility layers")
-    parser.add_argument('-w', '--weightings_config', type=str, required=False, default="weightings.json", help="JSON file containing priority weightings")
-    parser.add_argument('-q', '--qeia_matrix', type=str, required=False, help="Raw QEIA impact score matrix file")
-    parser.add_argument('--precalculated_priority_scores', type=str, required=False, help="Optional path precalculated priority scores table as a CSV", default=None)
-    parser.add_argument('--priority_score_output_path', type=str, required=False, help="Path to output prioirity scores table as CSV for this run", default="priority_scores.csv")
-    parser.add_argument('--overwrite_priority_score_output', type=bool, required=False, help="Overwrite existing prioirity scores table if it exists", default=False, action=argparse.BooleanOptionalAction)
-    parser.add_argument('--precalculated_weighted_priority_scores', type=str, required=False, help="Optional path precalculated weighted priority scores table as a CSV", default=None)
-    parser.add_argument('--weighted_priority_score_output_path', type=str, required=False, help="Path to output prioirity scores table as CSV for this run", default="weighted_priority_scores.csv")
-    parser.add_argument('--overwrite_weighted_priority_score_output', type=bool, required=False, help="Overwrite existing weigthed prioirity scores table if it exists", default=False, action=argparse.BooleanOptionalAction)
-    parser.add_argument('--precalculated_eligibility', type=str, required=False, help="Optional path precalculated option eligiblity table expressed as boolean options (CSV/Parquet)", default=None)
-    parser.add_argument('--precalculated_eligibility_as_area', type=str, required=False, help="Optional path precalculated option eligiblity table expresssed as a coverage area (CSV/Parquet)", default=None)
-    parser.add_argument('--eligibility_options_output_path', type=str, required=False, help="Path to output eligibility options table as CSV for this run", default="eligibility.csv")
-    parser.add_argument('--column_group_config_path', type=str, required=False, help="Path to a JSON file containing a configuration object for column group aggregation", default="")
-    parser.add_argument('--active_services_matrix_path', type=str, required=False, help="Path to output active services matrix as CSV for this run, if blank dont write", default="")
-    parser.add_argument('--overwrite_eligiblity_output', type=bool, required=False, help="Overwrite existing option eligiblity table if it exists", default=False, action=argparse.BooleanOptionalAction)
-    parser.add_argument('--mcda_output_path', type=str, required=False, help="Path to output MCDA table as CSV for this run", default="mcda.csv")
-    parser.add_argument('--overwrite_mcda_output', type=bool, required=False, help="Overwrite existing MCDA table if it exists", default=False, action=argparse.BooleanOptionalAction)
+    parser = argparse.ArgumentParser(description='Generate action scores for a given polygon land parcel')
+    parser.add_argument('-i', '--poly_source', type=str, required=True, help='Unique ID for the polygon')
+    parser.add_argument('-c', '--polygon_id_column', type=str, required=False, default='NGC', help='Column name for the polygon ID')
+    parser.add_argument('-l', '--layer_config', type=str, required=False, default='layers.json', help='JSON file containing priority and eligibility layers')
+    parser.add_argument('-w', '--weightings_config', type=str, required=False, default='weightings.json', help='JSON file containing priority weightings')
+    parser.add_argument('-q', '--qeia_matrix', type=str, required=False, help='Raw QEIA impact score matrix file')
+    parser.add_argument('--precalculated_priority_scores', type=str, required=False, help='Optional path precalculated priority scores table as a CSV', default=None)
+    parser.add_argument('--priority_score_output_path', type=str, required=False, help='Path to output prioirity scores table as CSV for this run', default='priority_scores.csv')
+    parser.add_argument('--overwrite_priority_score_output', type=bool, required=False, help='Overwrite existing prioirity scores table if it exists', default=False, action=argparse.BooleanOptionalAction)
+    parser.add_argument('--precalculated_weighted_priority_scores', type=str, required=False, help='Optional path precalculated weighted priority scores table as a CSV', default=None)
+    parser.add_argument('--weighted_priority_score_output_path', type=str, required=False, help='Path to output prioirity scores table as CSV for this run', default='weighted_priority_scores.csv')
+    parser.add_argument('--overwrite_weighted_priority_score_output', type=bool, required=False, help='Overwrite existing weigthed prioirity scores table if it exists', default=False, action=argparse.BooleanOptionalAction)
+    parser.add_argument('--precalculated_eligibility', type=str, required=False, help='Optional path precalculated option eligiblity table expressed as boolean options (CSV/Parquet)', default=None)
+    parser.add_argument('--precalculated_eligibility_as_area', type=str, required=False, help='Optional path precalculated option eligiblity table expresssed as a coverage area (CSV/Parquet)', default=None)
+    parser.add_argument('--eligibility_options_id_column', type=str, required=False, help='Name of the ID column in the eligibility dataset', default='id_parcel')
+    parser.add_argument('--eligibility_options_output_path', type=str, required=False, help='Path to output eligibility options table as CSV for this run', default='eligibility.csv')
+    parser.add_argument('--column_group_config_path', type=str, required=False, help='Path to a JSON file containing a configuration object for column group aggregation', default='')
+    parser.add_argument('--active_services_matrix_path', type=str, required=False, help='Path to output active services matrix as CSV for this run, if blank dont write', default='')
+    parser.add_argument('--overwrite_eligiblity_output', type=bool, required=False, help='Overwrite existing option eligiblity table if it exists', default=False, action=argparse.BooleanOptionalAction)
+    parser.add_argument('--mcda_output_path', type=str, required=False, help='Path to output MCDA table as CSV for this run', default='mcda.csv')
+    parser.add_argument('--overwrite_mcda_output', type=bool, required=False, help='Overwrite existing MCDA table if it exists', default=False, action=argparse.BooleanOptionalAction)
 
     args = parser.parse_args()
 

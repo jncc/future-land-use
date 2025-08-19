@@ -15,6 +15,7 @@ def templateToQEIAMultiplier(template: pd.DataFrame, qeia: QEIAMatrix) -> pd.Dat
     """
     qeiaMatrix = qeia.createDataFrame().transpose()
     qeiaMatrix.index.name = 'option'
+    qeiaMatrix.drop(columns=template.columns.difference(qeiaMatrix.columns), inplace=True)
 
     # 0 out the template
     template = template.copy()
@@ -23,7 +24,8 @@ def templateToQEIAMultiplier(template: pd.DataFrame, qeia: QEIAMatrix) -> pd.Dat
 
     for column in qeiaMatrix.columns:
         for option in qeiaMatrix.index:
-            template.loc[pd.IndexSlice[:, option], column] = qeiaMatrix.loc[option, column]
+            if option in template.index.get_level_values('option'):
+                template.loc[pd.IndexSlice[:, option], column] = qeiaMatrix.loc[option, column]
 
     return template
 
