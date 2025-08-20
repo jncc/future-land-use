@@ -226,30 +226,139 @@ This will output a CSV with the MCDA output to `mcda.csv` as well as intermediat
  - `--overwrite_eligiblity_output` - [**Optional**] Overwrite eligibility option output if it exists [Default: False]
  - `--column_group_config_path` - [**Optional**] Path to a JSON file containing a configuration object for column group aggregation, if blank, no aggregation will be performed [Default: ]
  - `--active_services_matrix_path` - [**Optional**] Path to output active services matrix as CSV for this run, if blank dont write [Default: ]
- - `--active_services_scores_path` - [**Optional**] Path to output active services scores as CSV for this run, if blank dont write [Default: ]
  - `--mcda_output_path {path}` - [**Optional**] Path to store output CSV of the MCDA analysis step [Default: `mcda.csv`]
  - `--overwrite_mcda_output` - [**Optional**] Overwrite MCDA output if it exists [Default: False]
 
- You can use the `--precalculated_x` arguments to input previously run outputs for the relevant steps to speed up processing while adjusting elements of the inputs.
+You can use the `--precalculated_x` arguments to input previously run outputs for the relevant steps to speed up processing while adjusting elements of the inputs.
 
- ## Utility Scripts
+## Utility Scripts
 
- ### Test Score Calculation
+### Test Score Calculation
 
- We have included a basic test set of data to do a simple test of the score calculation, this can be run with the following command;
+We have included a basic test set of data to do a simple test of the score calculation, this can be run with the following command;
 
- ```bash
+```bash
 python calculate_actions_for_multiple_inputs.py -c id -i ./testing/precalculated/layers.json  -l ./testing/precalculated/layers.json -w ./testing/precalculated/weightings.json -q ./testing/precalculated/qeia.json --precalculated_priority_scores ./testing/precalculated/priority_scores.csv --precalculated_eligibility ./testing/precalculated/eligibility_options.csv --column_group_config_path ./testing/precalculated/column_aggregation.json --active_services_matrix_path ./testing/precalculated/active_services_matrix.csv --mcda_output_path ./testing/precalculated/mcda.csv --overwrite_mcda_output --overwrite_weighted_priority_score_output
 ```
 
- ### Pregenerated Eligibility Options (Force True)
+### Generate Column Aggregation Templates
 
- Run the utiltity script `utility/generate_true_eligibility_table.py` to pre generate an options
- eligbility table where all polygons are fored to be eligible for all options.
+Run the utility script `utility/generate_column_aggregation_template.py` to generate a template for column aggregation based on the layers in the configuration file.
 
- ```bash
- python utility/generate_true_eligibility_table.py -i polygons.gpkg -c id_column -l layers.json -o eligibility.csv
- ```
+```bash
+python utility/generate_column_aggregation_template.py -a maintain_snh.csv -o Priority_Biod_MaintainSNH
+```
+
+ - `-a / --aggregation_config` - Path to CSV file containing column aggregation configuration as a TRUE/FALSE matrix outlined below
+ - `'-n / --aggregation_name` - Name of the aggregation to generate, this will be used as the key in the output JSON file i.e. `Priority_Biod_MaintainSNH`
+
+The input CSV file should be in the form of a TRUE/FALSE matrix where each row is an eligibility option and each column is a priority layer code (that will be appended to the aggregation name to create
+the full priority layer ID), with `TRUE` indicating that the priority layer should be included in the aggregation for that option and `FALSE` indicating it should not. For example:
+
+```csv
+option,ASN,BLB,LCG,...
+OPT1,TRUE,FALSE,FALSE,...
+OPT2,FALSE,TRUE,FALSE,...
+OPT3,FALSE,FALSE,TRUE,...
+```
+In this example, `ASN`, `BLB`, and `LCG` are the priority layers options and `OPT1`, `OPT2`, and `OPT3` are the eligibility options. The output will be a JSON object with the aggregation configuration 
+for each option.
+
+i.e.
+
+```json
+{
+    "Priority_Biod_MaintainSNH": {
+        "operation": "MAX",
+        "options": {
+            "OPT1": [
+                "ASN"
+            ],
+            "OPT2": [
+                "BLB"
+            ],
+            "OPT3": [
+                "LCG"
+            ]
+        }
+    }
+}
+```
+
+Currently the only operation supported is `MAX`, but this may be extended in the future.
+
+### Generate Layer Configuration Template
+
+Run the utility script `utility/generate_layer_config_template.py` to generate a template for layer configuration based on the layers in the configuration file.
+
+```bash
+python utility/generate_layer_config_template.py -p layers.csv -e eligibility.csv -o layers.json --priority_base_path /path/to/priority/layers --eligibility_base_path /path/to/eligibility/layers --prefer_raster
+```
+
+ - `-p / --priority_input` - Path to CSV file containing priority layer configuration
+ - `-e / --eligibility_input` - Path to CSV file containing eligibility layer configuration
+ - `-o / --output` - Path to output JSON file for layer configuration
+ - `--priority_base_path` - [**Optional**] Base path to replace found priority paths in the output JSON file
+ - `--eligibility_base_path` - [**Optional**] Base path to replace found eligibility paths in the output JSON file
+ - `--prefer_raster` - [**Optional**] If set, will prefer raster layers over vector layers when generating the template, default is False
+
+The input CSV files should be in the form of a list of layers with the following columns:
+
+```csv
+service_indicator/option_code,placeholder_file_path,raster_filepath_if_applicable
+layer_id,path/to/file.ext,optional/path/to/raster.tif
+...
+```
+
+Where `service_indicator/option_code` is the human friendly name for the layer, `layer_id` is the unique ID for the layer, and `placeholder_file_path` is the path to the file that will be used as a placeholder in the output JSON file. The `raster_filepath_if_applicable` column is optional and can be used to specify a raster file path if applicable. 
+
+For priority layers the `service_indicator` should be in the form of `Priority_{EcosystemServiceGroup}_{Action}` where `EcosystemServiceGroup` is the abbreviated name of the ecosystem service group (i.e. `Biod` for Biodiversity) and `Action` is the abbreviated name of the action (i.e. `MaintainSNH` for Maintain Semi-Natural Habitats).
+
+For eligibility layers the `option_code` should be a short, unique and descriptive of the layer, i.e. `Eligibility_GS6`, `Eligibility_LH1`, `Eligibility_SW17`, `Eligibility_SW18` etc.
+
+### Generate QEIA Matrix
+
+Run the utility script `utility/generate_qeia_matrix.py` to generate a QEIA matrix based on the layers in the configuration file.
+
+```bash
+python utility/generate_qeia_matrix.py -i qeia_input.csv -l layers.json -o qeia.json
+```
+
+ - `-i / --qeia_input` - Path to CSV file containing QEIA input data
+ - `-l / --layer_config` - Path to JSON file containing priority and eligibility layers
+ - `-o / --qeia_output` - [**Optional**] Path to output JSON file for QEIA matrix [Default: `qeia.json`]
+
+Where the input CSV file should be in the form of a list of QEIA inputs with the following columns:
+
+```csv
+eligibility_layer_id,priority_layer_id,impact_score
+Eligibility_GS6,Priority_Biod_MaintainSNH,1.0
+Eligibility_LH1,Priority_Biod_MaintainSNH,-1.0
+...
+```
+
+### Generate Random QEIA Matrix
+
+Run the utility script `utility/generate_random_qeia_matrix.py` to generate a random QEIA matrix based on the layers in the configuration file.
+
+```bash
+python utility/generate_random_qeia_matrix.py -l layers.json -o qeia.json --min_range -3 --max_range 3 --whole_numbers
+```
+    
+ - `-l / --layer_config` - Path to JSON file containing priority and eligibility layers
+ - `-o / --qeia_output` - [**Optional**] Path to output JSON file for QEIA matrix [Default: `qeia.json`]
+ - `--min_range` - [**Optional**] Minimum range for impact scores, default is -3
+ - `--max_range` - [**Optional**] Maximum range for impact scores, default is 3
+ - `--whole_numbers` - [**Optional**] If set, will generate whole numbers for impact scores, default is False (i.e. will generate floats)
+
+### Pregenerated Eligibility Options (Force True)
+
+Run the utiltity script `utility/generate_true_eligibility_table.py` to pre generate an options
+eligbility table where all polygons are fored to be eligible for all options.
+
+```bash
+python utility/generate_true_eligibility_table.py -i polygons.gpkg -c id_column -l layers.json -o eligibility.csv
+```
 
  - `-i / --poly_source {path}` - Path to polygon datasource, ideally a GeoPackage, but should function with any vector format
  - `-c / --polygon_id_column {name}` - [**Optional**] allows user to specify the attribute column name to use as an ID for polygons [Default: NGC]
