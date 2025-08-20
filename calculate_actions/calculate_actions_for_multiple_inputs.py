@@ -79,7 +79,7 @@ def main(polygonPath: str,
         logging.info('Pre-calculated weighted priority scores found, skipping priority score calculation')
         logging.info('Reading pre-calculated weighted priority scores')
         weightedPriorityScores = pd.read_csv(precalculatedWeightedPrioirityScores)
-        weightedPriorityScores.set_index('id', inplace=True)
+        weightedPriorityScores.set_index(['id','option'], inplace=True)
     else:
         (startWallTime, startProcessTime) = startTimers()
         if precalculatedPriorityScores and Path(precalculatedPriorityScores).exists():
@@ -108,8 +108,6 @@ def main(polygonPath: str,
         logging.info(f'Process Time: {processTime} seconds')
         print(priorityScores)
 
-
-
         (startWallTime, startProcessTime) = startTimers()
         logging.info('Calculating active services from priority scores')
 
@@ -121,104 +119,104 @@ def main(polygonPath: str,
         logging.info(f'Wall Time: {wallTime} seconds')
         logging.info(f'Process Time: {processTime} seconds')
 
-    if precalculatedEligibility and Path(precalculatedEligibility).exists():
-        logging.info('Reading pre-calculated eligibility options')
-        if Path(precalculatedEligibility).suffix == '.parquet':
-            optionEligbility = pd.read_parquet(precalculatedEligibility)
-            optionEligbility.set_index('id', inplace=True)
-        else:
-            optionEligbility = pd.read_csv(precalculatedEligibility)
-            optionEligbility.set_index('id', inplace=True)
-    elif precalculatedEligibilityAsArea and Path(precalculatedEligibilityAsArea).exists():
-        logging.info('Reading pre-calculated eligibility options as area')
-        if Path(precalculatedEligibilityAsArea).suffix == '.parquet':
-            logging.info('Pre-calculated eligibility options as area is in parquet format, reading as such assuming RPA input')
-            optionEligbilityAreas = pd.read_parquet(precalculatedEligibilityAsArea)
-            optionEligbilityAreas.set_index('id_parcel', inplace=True)
-            # Convert to boolean options
-            optionEligbility = optionEligbilityAreas.map(lambda x: not np.isnan(x))
-            optionEligbility.index.names = ['id']
-        else:
-            optionEligbilityAreas = pd.read_csv(precalculatedEligibilityAsArea)
-            optionEligbilityAreas.set_index('id_parcel', inplace=True)
-            optionEligbility = optionEligbilityAreas.map(lambda x: not np.isnan(x))
-    else:
-        if Path(eligibilityScoreOutputPath).exists():
-            if overwriteEligibilityScores:
-                logging.warning(f'Output path {eligibilityScoreOutputPath} already exists, overwriting')
+        if precalculatedEligibility and Path(precalculatedEligibility).exists():
+            logging.info('Reading pre-calculated eligibility options')
+            if Path(precalculatedEligibility).suffix == '.parquet':
+                optionEligbility = pd.read_parquet(precalculatedEligibility)
+                optionEligbility.set_index('id', inplace=True)
             else:
-                logging.warning(f'Output path {eligibilityScoreOutputPath} already exists, exiting')
-                raise FileExistsError(f'Output path {eligibilityScoreOutputPath} already exists')
+                optionEligbility = pd.read_csv(precalculatedEligibility)
+                optionEligbility.set_index('id', inplace=True)
+        elif precalculatedEligibilityAsArea and Path(precalculatedEligibilityAsArea).exists():
+            logging.info('Reading pre-calculated eligibility options as area')
+            if Path(precalculatedEligibilityAsArea).suffix == '.parquet':
+                logging.info('Pre-calculated eligibility options as area is in parquet format, reading as such assuming RPA input')
+                optionEligbilityAreas = pd.read_parquet(precalculatedEligibilityAsArea)
+                optionEligbilityAreas.set_index('id_parcel', inplace=True)
+                # Convert to boolean options
+                optionEligbility = optionEligbilityAreas.map(lambda x: not np.isnan(x))
+                optionEligbility.index.names = ['id']
+            else:
+                optionEligbilityAreas = pd.read_csv(precalculatedEligibilityAsArea)
+                optionEligbilityAreas.set_index('id_parcel', inplace=True)
+                optionEligbility = optionEligbilityAreas.map(lambda x: not np.isnan(x))
+        else:
+            if Path(eligibilityScoreOutputPath).exists():
+                if overwriteEligibilityScores:
+                    logging.warning(f'Output path {eligibilityScoreOutputPath} already exists, overwriting')
+                else:
+                    logging.warning(f'Output path {eligibilityScoreOutputPath} already exists, exiting')
+                    raise FileExistsError(f'Output path {eligibilityScoreOutputPath} already exists')
 
-        logging.info('Determining polygon eligibility')
+            logging.info('Determining polygon eligibility')
 
-        eligibilityLayers: dict[str, EligibilityLayer] = {}
-        eligibilityLayers = processEligibilityLayers(config['eligibility_layers'])
-        
+            eligibilityLayers: dict[str, EligibilityLayer] = {}
+            eligibilityLayers = processEligibilityLayers(config['eligibility_layers'])
+            
+            (startWallTime, startProcessTime) = startTimers()
+
+            optionEligbility = calculateOptionEligibilityForInputPolygons(Path(polygonPath), eligibilityLayers)
+            optionEligbility.to_csv(eligibilityScoreOutputPath, index=True, index_label='id')
+            
+            (wallTime, processTime) = endTimers(startWallTime, startProcessTime, 1)
+            
+            logging.info('---------------------------- Eligibility Discovery Complete ---------------------------- ')
+            logging.info(f'Wall Time: {wallTime} seconds')
+            logging.info(f'Process Time: {processTime} seconds')
+        print(optionEligbility)
+
+        mergedPriorityScores = mergeEligibilityOptions(priorityScores, optionEligbility)
+
         (startWallTime, startProcessTime) = startTimers()
+        logging.info('Aggregating group columns in priority scores')
 
-        optionEligbility = calculateOptionEligibilityForInputPolygons(Path(polygonPath), eligibilityLayers)
-        optionEligbility.to_csv(eligibilityScoreOutputPath, index=True, index_label='id')
+        if columnGroupConfigPath.strip():
+            with open(columnGroupConfigPath) as config:
+                columnGroupConfig = json.load(config)
+            
+            for columnGroup in columnGroupConfig.keys():
+                logging.info(f'Aggregating column group {columnGroup}')
+
+                mergedPriorityScores = groupColumnAggregation(mergedPriorityScores, columnGroup, columnGroupConfig[columnGroup]['options'], columnGroupConfig[columnGroup]['operation'])
         
-        (wallTime, processTime) = endTimers(startWallTime, startProcessTime, 1)
-        
-        logging.info('---------------------------- Eligibility Discovery Complete ---------------------------- ')
+        print(mergedPriorityScores)
+
+        logging.info('---------------------------- Column Group Aggregation Complete ---------------------------- ')
         logging.info(f'Wall Time: {wallTime} seconds')
         logging.info(f'Process Time: {processTime} seconds')
-    print(optionEligbility)
 
-    mergedPriorityScores = mergeEligibilityOptions(priorityScores, optionEligbility)
+        (startWallTime, startProcessTime) = startTimers()
+        logging.info('Initial Priority Score Weighting')
 
-    (startWallTime, startProcessTime) = startTimers()
-    logging.info('Aggregating group columns in priority scores')
+        mergedPriorityScores = calculateInitialPriorityScoreWeighting(mergedPriorityScores)
+        print(mergedPriorityScores)
 
-    if columnGroupConfigPath.strip():
-        with open(columnGroupConfigPath) as config:
-            columnGroupConfig = json.load(config)
+        logging.info('---------------------------- Initial Priority Score Weighting Complete ---------------------------- ')
+        logging.info(f'Wall Time: {wallTime} seconds')
+        logging.info(f'Process Time: {processTime} seconds')
+
+        logging.info('Calculating weighted priority scores')
+        (startWallTime, startProcessTime) = startTimers()
+
+        if (Path(weightedPriorityScoreOutputPath).exists()):
+            if overwriteWeightedPriorityScores:
+                logging.warning(f'Output path {priorityScoreOutputPath} already exists, overwriting')
+            else:
+                logging.warning(f'Output path {priorityScoreOutputPath} already exists, exiting')
+                raise FileExistsError(f'Output path {priorityScoreOutputPath} already exists')
+
+        with open(weightingsConfig) as f:
+            weightings = json.load(f)
+            if not set(weightings.keys()).issuperset(mergedPriorityScores.keys().to_list()):
+                raise ValueError('Mismatch between priority layers and weightings')
+
+        weightedPriorityScores = calculatePriorityScoreWeighting(mergedPriorityScores, weightings)
+        weightedPriorityScores.to_csv(weightedPriorityScoreOutputPath)
+        print(weightedPriorityScores)
         
-        for columnGroup in columnGroupConfig.keys():
-            logging.info(f'Aggregating column group {columnGroup}')
-
-            mergedPriorityScores = groupColumnAggregation(mergedPriorityScores, columnGroup, columnGroupConfig[columnGroup]['options'], columnGroupConfig[columnGroup]['operation'])
-    
-    print(mergedPriorityScores)
-
-    logging.info('---------------------------- Column Group Aggregation Complete ---------------------------- ')
-    logging.info(f'Wall Time: {wallTime} seconds')
-    logging.info(f'Process Time: {processTime} seconds')
-
-    (startWallTime, startProcessTime) = startTimers()
-    logging.info('Initial Priority Score Weighting')
-
-    mergedPriorityScores = calculateInitialPriorityScoreWeighting(mergedPriorityScores)
-    print(mergedPriorityScores)
-
-    logging.info('---------------------------- Initial Priority Score Weighting Complete ---------------------------- ')
-    logging.info(f'Wall Time: {wallTime} seconds')
-    logging.info(f'Process Time: {processTime} seconds')
-
-    logging.info('Calculating weighted priority scores')
-    (startWallTime, startProcessTime) = startTimers()
-
-    if (Path(weightedPriorityScoreOutputPath).exists()):
-        if overwriteWeightedPriorityScores:
-            logging.warning(f'Output path {priorityScoreOutputPath} already exists, overwriting')
-        else:
-            logging.warning(f'Output path {priorityScoreOutputPath} already exists, exiting')
-            raise FileExistsError(f'Output path {priorityScoreOutputPath} already exists')
-
-    with open(weightingsConfig) as f:
-        weightings = json.load(f)
-        if not set(weightings.keys()).issuperset(mergedPriorityScores.keys().to_list()):
-            raise ValueError('Mismatch between priority layers and weightings')
-
-    weightedPriorityScores = calculatePriorityScoreWeighting(mergedPriorityScores, weightings)
-    weightedPriorityScores.to_csv(weightedPriorityScoreOutputPath, index=True, index_label='id')
-    print(weightedPriorityScores)
-    
-    logging.info('---------------------------- Priority Score Weighting Complete ---------------------------- ')
-    logging.info(f'Wall Time: {wallTime} seconds')
-    logging.info(f'Process Time: {processTime} seconds')
+        logging.info('---------------------------- Priority Score Weighting Complete ---------------------------- ')
+        logging.info(f'Wall Time: {wallTime} seconds')
+        logging.info(f'Process Time: {processTime} seconds')
 
     logging.info('Calculate action scores using priorities and QEIA')
     (startWallTime, startProcessTime) = startTimers()

@@ -23,14 +23,12 @@ def main(input: str,
         qeia_input.dropna(subset=['eligibility_layer_id'], inplace=True)
         qeia_input.replace({np.nan: None}, inplace=True)    
     
-    print(set(qeia_input['eligibility_layer_id'].unique()))
-    print(set(layers['eligibility_layers'].keys()))
     # if not set(qeia_input['eligibility_layer_id'].unique()).issuperset(set(layers['eligibility_layers'].keys())):
     #     raise ValueError('Input QEIA CSV does not contain all required Eligiblity layers')
 
     qeia = {k:{} for k in layers['eligibility_layers']}
     for i, row in qeia_input[qeia_input['eligibility_layer_id'].isin(layers['eligibility_layers'].keys())].iterrows():
-        # if row['priority_layer_id'] in layers['priority_layers'].keys():
+        if row['priority_layer_id'] in layers['priority_layers'].keys():
             qeia[row['eligibility_layer_id']][row['priority_layer_id']] = row['impact_score']
 
     with open(output, 'w') as o:

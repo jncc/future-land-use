@@ -15,7 +15,7 @@ def templateToQEIAMultiplier(template: pd.DataFrame, qeia: QEIAMatrix) -> pd.Dat
     """
     qeiaMatrix = qeia.createDataFrame().transpose()
     qeiaMatrix.index.name = 'option'
-    qeiaMatrix.drop(columns=template.columns.difference(qeiaMatrix.columns), inplace=True)
+    qeiaMatrix.drop(columns=qeiaMatrix.columns.difference(template.columns), inplace=True)
 
     # 0 out the template
     template = template.copy()
