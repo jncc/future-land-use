@@ -200,10 +200,10 @@ def main(polygonPath: str,
 
         if (Path(weightedPriorityScoreOutputPath).exists()):
             if overwriteWeightedPriorityScores:
-                logging.warning(f'Output path {priorityScoreOutputPath} already exists, overwriting')
+                logging.warning(f'Output path {weightedPriorityScoreOutputPath} already exists, overwriting')
             else:
-                logging.warning(f'Output path {priorityScoreOutputPath} already exists, exiting')
-                raise FileExistsError(f'Output path {priorityScoreOutputPath} already exists')
+                logging.warning(f'Output path {weightedPriorityScoreOutputPath} already exists, exiting')
+                raise FileExistsError(f'Output path {weightedPriorityScoreOutputPath} already exists')
 
         with open(weightingsConfig) as f:
             weightings = json.load(f)

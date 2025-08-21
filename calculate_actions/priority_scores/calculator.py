@@ -16,7 +16,7 @@ def calculateActiveServices(priorityScores: pd.DataFrame, outputPath: str, write
     Returns:
         pd.DataFrame: A DataFrame containing the active services for each input polygon ID
     """
-    ecosystemServices = sorted(set([re.match(r"Priority_(\w+)_\w+",x).group(1) for x in priorityScores.columns]))
+    ecosystemServices = sorted(set([re.match(r"Priority_([a-zA-Z0-9]+)_\w+",x).group(1) for x in priorityScores.columns]))
     
     ecosystemServiceApplicable = pd.DataFrame({'id': priorityScores.index})
     ecosystemServiceApplicable.set_index('id', inplace=True)
@@ -54,7 +54,9 @@ def groupColumnAggregation(priorityScores: pd.DataFrame, group: str, eligibleOpt
     for option in eligibleOptions.keys():
         # Get all columns that match the option
         optionColumns = [f'{group}_{opt}' for opt in eligibleOptions[option]]
-        if option in priorityScores.index.get_level_values('option'):
+        
+        # If no options are found, all are considered eligible?
+        if optionColumns and option in priorityScores.index.get_level_values('option'):
             # Set the priority scores to None for columns that are not in the optionColumns group
             priorityScores.loc[pd.IndexSlice[:,f'Eligibility_{option}'], priorityScores[groupColumns].columns.difference(optionColumns)] = None
 
