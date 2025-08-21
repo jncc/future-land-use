@@ -1,5 +1,7 @@
 {
     "Priority_AirP_ReducedNH3": 1.2,
     "Priority_Biod_MaintainSNH": 1.5,
-    "Priority_RivEro_RiverErosion": 1
+    "Priority_RivEro_RiverErosion": 1,
+    "Priority_Biod_NDeposition": 1
+
 }

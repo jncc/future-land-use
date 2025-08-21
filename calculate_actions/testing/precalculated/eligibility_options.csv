@@ -1,3 +1,4 @@
-id,OPT1,OPT2,OPT3
-1,True,False,True
-2,False,True,True
+id,Eligibility_OPT1,Eligibility_OPT2,Eligibility_OPT3,Eligibility_OPT4
+1,True,False,True,False
+2,False,True,True,False
+3,False,False,False,True
