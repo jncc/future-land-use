@@ -243,10 +243,10 @@ python calculate_actions_for_multiple_inputs.py -c id -i ./testing/precalculated
 
 ### Generate Column Aggregation Templates
 
-Run the utility script `utility/generate_column_aggregation_template.py` to generate a template for column aggregation based on the layers in the configuration file.
+Run the utility script `utility/generate_column_aggregation_templates.py` to generate a template for column aggregation based on the layers in the configuration file.
 
 ```bash
-python utility/generate_column_aggregation_template.py -a maintain_snh.csv -o Priority_Biod_MaintainSNH
+python utility/generate_column_aggregation_templates.py -a maintain_snh.csv -o Priority_Biod_MaintainSNH
 ```
 
  - `-a / --aggregation_config` - Path to CSV file containing column aggregation configuration as a TRUE/FALSE matrix outlined below
