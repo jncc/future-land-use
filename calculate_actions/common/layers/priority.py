@@ -34,7 +34,7 @@ class PriorityVectorLayer(VectorLayer, PriorityLayer):
     """
     columnName: str
 
-    def __init__(self, name: str, friendlyName: str, path: Path, columnName: str = 'PriorityScore'):
+    def __init__(self, name: str, friendlyName: str, path: Path, columnName: str = 'Priority_normalised'):
         """Initialises the VectorLayer and PriorityLayer superclasses with the supplied
         values
 
@@ -42,7 +42,7 @@ class PriorityVectorLayer(VectorLayer, PriorityLayer):
             name (str): A computer friendly name for this layer
             friendlyName (str): A human friendly anme for this layer
             path (Path): The fully path to the vector layer file
-            columnName (str, optional): The score column to use from the vector layer. Defaults to 'PriorityScore'.
+            columnName (str, optional): The score column to use from the vector layer. Defaults to 'Priority_normalised'.
         """
         VectorLayer.__init__(self, name, friendlyName, path)
         PriorityLayer.__init__(self)
@@ -54,7 +54,7 @@ class PriorityVectorLayer(VectorLayer, PriorityLayer):
 
         Args:
             polygon (Polygon): A polygon to intersect this layer with
-            columnName (str, optional): The score column to use from the vector layer. Defaults to 'PriorityScore'.
+            columnName (str, optional): The score column to use from the vector layer. Defaults to 'Priority_normalised'.
 
         Returns:
             np.floating: The maximum score for this layer intersected with the input polygon
