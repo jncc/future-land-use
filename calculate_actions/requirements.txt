@@ -9,6 +9,7 @@ geopandas==1.0.1
 numpy==2.2.2
 packaging==24.2
 pandas==2.2.3
+pyarrow==20.0.0
 pyogrio==0.10.0
 pyparsing==3.2.1
 pyproj==3.7.0
