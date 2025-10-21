@@ -3,6 +3,7 @@ import argparse
 import logging
 import pandas as pd
 import numpy as np
+import re
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(asctime)s: %(message)s')
     
@@ -21,14 +22,16 @@ def main(input: str,
     with open(input) as f:
         qeia_input = pd.read_csv(input)
         qeia_input.dropna(subset=['eligibility_layer_id'], inplace=True)
-        qeia_input.replace({np.nan: None}, inplace=True)    
+        qeia_input.replace({np.nan: None}, inplace=True)
     
     # if not set(qeia_input['eligibility_layer_id'].unique()).issuperset(set(layers['eligibility_layers'].keys())):
     #     raise ValueError('Input QEIA CSV does not contain all required Eligiblity layers')
 
+    priorityLayers = set([re.match(r"(Priority_([a-zA-Z0-9]+)_([a-zA-Z0-9]+))(_(\w+))?", layer).group(1) for layer in layers['priority_layers'].keys()])
+
     qeia = {k:{} for k in layers['eligibility_layers']}
     for i, row in qeia_input[qeia_input['eligibility_layer_id'].isin(layers['eligibility_layers'].keys())].iterrows():
-        if row['priority_layer_id'] in layers['priority_layers'].keys():
+        if row['priority_layer_id'] in priorityLayers:
             qeia[row['eligibility_layer_id']][row['priority_layer_id']] = row['impact_score']
 
     with open(output, 'w') as o:
