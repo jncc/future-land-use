@@ -54,11 +54,9 @@ def groupColumnAggregation(priorityScores: pd.DataFrame, group: str, eligibleOpt
     for option in eligibleOptions.keys():
         # Get all columns that match the option
         optionColumns = [f'{group}_{opt}' for opt in eligibleOptions[option]]
-        
-        # If no options are found, all are considered eligible?
-        if optionColumns and option in priorityScores.index.get_level_values('option'):
-            # Set the priority scores to None for columns that are not in the optionColumns group
-            priorityScores.loc[pd.IndexSlice[:,f'Eligibility_{option}'], priorityScores[groupColumns].columns.difference(optionColumns)] = None
+       
+        # Set the priority scores to None for columns that are not in the optionColumns group
+        priorityScores.loc[pd.IndexSlice[:,f'Eligibility_{option}'], priorityScores[groupColumns].columns.difference(optionColumns)] = None
 
     match operation:
         case 'MAX':
