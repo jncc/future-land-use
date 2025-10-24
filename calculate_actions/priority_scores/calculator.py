@@ -1,4 +1,5 @@
 import pandas as pd
+import logging
 import re
 
 def calculateActiveServices(priorityScores: pd.DataFrame, outputPath: str, writeOutput: bool = False) -> pd.DataFrame:
@@ -55,8 +56,12 @@ def groupColumnAggregation(priorityScores: pd.DataFrame, group: str, eligibleOpt
         # Get all columns that match the option
         optionColumns = [f'{group}_{opt}' for opt in eligibleOptions[option]]
         
-        # Set the priority scores to None for columns that are not in the optionColumns group
-        priorityScores.loc[pd.IndexSlice[:,f'Eligibility_{option}'], priorityScores[groupColumns].columns.difference(optionColumns)] = None
+        # Check if any values for the option are eligible
+        if option in priorityScores.index.get_level_values('option'):
+            # Set the priority scores to None for columns that are not in the optionColumns group
+            priorityScores.loc[pd.IndexSlice[:,f'Eligibility_{option}'], priorityScores[groupColumns].columns.difference(optionColumns)] = None
+        else:
+            logging.info(f'Option {option} is never eligible for group {group}, skipping')
 
     match operation:
         case 'MAX':
