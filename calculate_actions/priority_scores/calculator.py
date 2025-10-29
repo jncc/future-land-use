@@ -57,7 +57,7 @@ def groupColumnAggregation(priorityScores: pd.DataFrame, group: str, eligibleOpt
         optionColumns = [f'{group}_{opt}' for opt in eligibleOptions[option]]
         
         # Check if any values for the option are eligible
-        if option in priorityScores.index.get_level_values('option'):
+        if f'Eligibility_{option}' in priorityScores.index.get_level_values('option'):
             # Set the priority scores to None for columns that are not in the optionColumns group
             priorityScores.loc[pd.IndexSlice[:,f'Eligibility_{option}'], priorityScores[groupColumns].columns.difference(optionColumns)] = None
         else:
