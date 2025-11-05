@@ -123,10 +123,10 @@ def main(polygonPath: str,
             logging.info('Reading pre-calculated eligibility options')
             if Path(precalculatedEligibility).suffix == '.parquet':
                 optionEligbility = pd.read_parquet(precalculatedEligibility)
-                optionEligbility.set_index('id', inplace=True)
+                optionEligbility.set_index('id_parcel', inplace=True)
             else:
                 optionEligbility = pd.read_csv(precalculatedEligibility)
-                optionEligbility.set_index('id', inplace=True)
+                optionEligbility.set_index('id_parcel', inplace=True)
         elif precalculatedEligibilityAsArea and Path(precalculatedEligibilityAsArea).exists():
             logging.info('Reading pre-calculated eligibility options as area')
             if Path(precalculatedEligibilityAsArea).suffix == '.parquet':
