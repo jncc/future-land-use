@@ -2,6 +2,7 @@ import json
 import argparse
 import logging
 
+from common.helpers import get_output_path, get_output_filename
 from common.layers import EligibilityLayer, PriorityLayer, processEligibilityLayers, processPriorityLayers
 from common.timing import startTimers, endTimers
 from common.qeia import QEIAMatrix
@@ -13,26 +14,29 @@ import pandas as pd
 import numpy as np
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(asctime)s: %(message)s')
-    
+
 def main(polygonPath: str,
          polygonIdColumn: str,
          layerConfig: str,
          weightingsConfig: str,
          qeiaMatrix: str,
-         precalculatedPriorityScores: str,
-         priorityScoreOutputPath: str,
+         usePrecalculatedPriorityScores: bool,
+         priorityScoreFilename: str,
          overwritePriorityScores: bool,
-         precalculatedWeightedPrioirityScores: str,
-         weightedPriorityScoreOutputPath: str,
+         usePrecalculatedWeightedPrioirityScores: bool,
+         weightedPriorityScoreFilename: str,
          overwriteWeightedPriorityScores: bool,
-         precalculatedEligibility: str, 
-         precalculatedEligibilityAsArea: str,
-         eligibilityScoreOutputPath: str, 
+         usePrecalcalculatedEligibility: bool,
+         eligibilityFilename: str,
          overwriteEligibilityScores: bool,
+         precalculatedEligibilityIsArea: bool,
+         externalEligibilityOptionsPath: str,
          columnGroupConfigPath: str,
-         activeServicesMatrixPath: str,
-         mcda_output_path: str,
-         overwrite_mcda_output: bool):
+         activeServicesMatrixFilename: str,
+         mcdaFilename: str,
+         overwriteMcda: bool,
+         outputPath: str,
+         runName: str):
     '''Process a a set of input polygons through to MCDA, using weighted priority scores, eligible option layers and 
     an input QEIA matrix, function will output several intermediate CSV files during the process to help with rerunning
     the script with different options or pre-constructed inputs.
@@ -50,7 +54,7 @@ def main(polygonPath: str,
         weightedPriorityScoreOutputPath (str): Path to store intermediate weighted priority scores to as a CSV
         overwriteWeightedPriorityScores (bool): Overwrites weighted priority scores file if it already exists
         precalculatedEligibility (str): Optional, if not none use this path to load an existing output of eligibilty options per polygon (CSV/Parquet)
-        precalculated_eligibility_as_area (str): Optional, if not none use this path to load an existing output of eligibilty options as area per polygon (CSV/Parquet)
+        precalculatedEligibility_as_area (str): Optional, if not none use this path to load an existing output of eligibilty options as area per polygon (CSV/Parquet)
         eligibilityScoreOutputPath (str): Path to store intermediate eligibility options for the intput polygons
         overwriteEligibilityScores (bool): Overwrites the eligibility options CSV file if it already exists
         columnGroupConfigPath (str): Path to a JSON file containing a configuration object for column group aggregation
@@ -75,24 +79,35 @@ def main(polygonPath: str,
 
     (procStartWallTime, procStartProcessTime) = startTimers()
 
-    if precalculatedWeightedPrioirityScores and Path(precalculatedWeightedPrioirityScores).exists():
+    finalOutputPath = get_output_path(outputPath if outputPath else '.', runName)
+
+    finalPriorityScorePath = finalOutputPath.joinpath(get_output_filename(priorityScoreFilename, runName))
+    finalWeightedPriorityScorePath = finalOutputPath.joinpath(get_output_filename(weightedPriorityScoreFilename, runName))
+    if externalEligibilityOptionsPath:
+        finalEligibilityOptionsPath = Path(externalEligibilityOptionsPath)
+    else:
+        finalEligibilityOptionsPath = finalOutputPath.joinpath(get_output_filename(eligibilityFilename, runName))
+    finalMcdaPath = finalOutputPath.joinpath(get_output_filename(mcdaFilename, runName))
+    
+
+    if usePrecalculatedWeightedPrioirityScores and finalWeightedPriorityScorePath.exists():
         logging.info('Pre-calculated weighted priority scores found, skipping priority score calculation')
         logging.info('Reading pre-calculated weighted priority scores')
-        weightedPriorityScores = pd.read_csv(precalculatedWeightedPrioirityScores)
+        weightedPriorityScores = pd.read_csv(finalWeightedPriorityScorePath)
         weightedPriorityScores.set_index(['id','option'], inplace=True)
     else:
         (startWallTime, startProcessTime) = startTimers()
-        if precalculatedPriorityScores and Path(precalculatedPriorityScores).exists():
+        if usePrecalculatedPriorityScores and finalPriorityScorePath.exists():
             logging.info('Reading pre-calculated priority scores')
-            priorityScores = pd.read_csv(precalculatedPriorityScores)
+            priorityScores = pd.read_csv(finalPriorityScorePath)
             priorityScores.set_index('id', inplace=True)
         else:
-            if (Path(priorityScoreOutputPath).exists()):
+            if finalPriorityScorePath.exists():
                 if overwritePriorityScores:
-                    logging.warning(f'Output path {priorityScoreOutputPath} already exists, overwriting')
+                    logging.warning(f'Output path {finalPriorityScorePath} already exists, overwriting')
                 else:
-                    logging.warning(f'Output path {priorityScoreOutputPath} already exists, exiting')
-                    raise FileExistsError(f'Output path {priorityScoreOutputPath} already exists')
+                    logging.warning(f'Output path {finalPriorityScorePath} already exists, exiting')
+                    raise FileExistsError(f'Output path {finalPriorityScorePath} already exists')
             
             priorityLayers: dict[str, PriorityLayer] = {}
             priorityLayers = processPriorityLayers(config['priority_layers'])
@@ -100,7 +115,7 @@ def main(polygonPath: str,
             
             logging.info('Calculate priority scores')
             priorityScores = extractPriorityScoresForInputPolygons(Path(polygonPath), priorityLayers, polygonIdColumn)
-            priorityScores.to_csv(priorityScoreOutputPath, index=True, index_label='id')
+            priorityScores.to_csv(finalPriorityScorePath, index=True, index_label='id')
         
         (wallTime, processTime) = endTimers(startWallTime, startProcessTime, 1)
         logging.info('---------------------------- Priority Score Extraction Complete ---------------------------- ')
@@ -111,7 +126,13 @@ def main(polygonPath: str,
         (startWallTime, startProcessTime) = startTimers()
         logging.info('Calculating active services from priority scores')
 
-        activeServicesMatrix = calculateActiveServices(priorityScores, activeServicesMatrixPath, activeServicesMatrixPath.strip() != '')
+        activeServicesMatrix = calculateActiveServices(priorityScores)
+        
+        if activeServicesMatrixFilename.strip() != '':
+            finalActiveServicesMatrixPath = finalOutputPath.joinpath(get_output_filename(activeServicesMatrixFilename, runName))
+            logging.info(f'Wrote active services matrix to {finalActiveServicesMatrixPath}')
+            activeServicesMatrix.to_csv(finalActiveServicesMatrixPath, index=True, index_label='id')
+            
         activeServicesMatrix.drop(activeServicesMatrix.columns.difference(['id', 'totalServices']), axis=1, inplace=True)
 
         priorityScores = priorityScores.merge(activeServicesMatrix, on='id', how='left')
@@ -119,34 +140,34 @@ def main(polygonPath: str,
         logging.info(f'Wall Time: {wallTime} seconds')
         logging.info(f'Process Time: {processTime} seconds')
 
-        if precalculatedEligibility and Path(precalculatedEligibility).exists():
+        if usePrecalcalculatedEligibility and finalEligibilityOptionsPath.exists():
             logging.info('Reading pre-calculated eligibility options')
-            if Path(precalculatedEligibility).suffix == '.parquet':
-                optionEligbility = pd.read_parquet(precalculatedEligibility)
+            if Path(finalEligibilityOptionsPath).suffix == '.parquet':
+                optionEligbility = pd.read_parquet(finalEligibilityOptionsPath)
                 optionEligbility.set_index('id_parcel', inplace=True)
             else:
-                optionEligbility = pd.read_csv(precalculatedEligibility)
+                optionEligbility = pd.read_csv(finalEligibilityOptionsPath)
                 optionEligbility.set_index('id_parcel', inplace=True)
-        elif precalculatedEligibilityAsArea and Path(precalculatedEligibilityAsArea).exists():
+        elif precalculatedEligibilityIsArea and Path(finalEligibilityOptionsPath).exists():
             logging.info('Reading pre-calculated eligibility options as area')
-            if Path(precalculatedEligibilityAsArea).suffix == '.parquet':
+            if Path(finalEligibilityOptionsPath).suffix == '.parquet':
                 logging.info('Pre-calculated eligibility options as area is in parquet format, reading as such assuming RPA input')
-                optionEligbilityAreas = pd.read_parquet(precalculatedEligibilityAsArea)
+                optionEligbilityAreas = pd.read_parquet(finalEligibilityOptionsPath)
                 optionEligbilityAreas.set_index('id_parcel', inplace=True)
                 # Convert to boolean options
                 optionEligbility = optionEligbilityAreas.map(lambda x: not np.isnan(x))
                 optionEligbility.index.names = ['id']
             else:
-                optionEligbilityAreas = pd.read_csv(precalculatedEligibilityAsArea)
+                optionEligbilityAreas = pd.read_csv(finalEligibilityOptionsPath)
                 optionEligbilityAreas.set_index('id_parcel', inplace=True)
                 optionEligbility = optionEligbilityAreas.map(lambda x: not np.isnan(x))
         else:
-            if Path(eligibilityScoreOutputPath).exists():
+            if Path(finalEligibilityOptionsPath).exists():
                 if overwriteEligibilityScores:
-                    logging.warning(f'Output path {eligibilityScoreOutputPath} already exists, overwriting')
+                    logging.warning(f'Output path {finalEligibilityOptionsPath} already exists, overwriting')
                 else:
-                    logging.warning(f'Output path {eligibilityScoreOutputPath} already exists, exiting')
-                    raise FileExistsError(f'Output path {eligibilityScoreOutputPath} already exists')
+                    logging.warning(f'Output path {finalEligibilityOptionsPath} already exists, exiting')
+                    raise FileExistsError(f'Output path {finalEligibilityOptionsPath} already exists')
 
             logging.info('Determining polygon eligibility')
 
@@ -156,7 +177,7 @@ def main(polygonPath: str,
             (startWallTime, startProcessTime) = startTimers()
 
             optionEligbility = calculateOptionEligibilityForInputPolygons(Path(polygonPath), eligibilityLayers)
-            optionEligbility.to_csv(eligibilityScoreOutputPath, index=True, index_label='id')
+            optionEligbility.to_csv(finalEligibilityOptionsPath, index=True, index_label='id')
             
             (wallTime, processTime) = endTimers(startWallTime, startProcessTime, 1)
             
@@ -198,12 +219,12 @@ def main(polygonPath: str,
         logging.info('Calculating weighted priority scores')
         (startWallTime, startProcessTime) = startTimers()
 
-        if (Path(weightedPriorityScoreOutputPath).exists()):
+        if (Path(finalWeightedPriorityScorePath).exists()):
             if overwriteWeightedPriorityScores:
-                logging.warning(f'Output path {weightedPriorityScoreOutputPath} already exists, overwriting')
+                logging.warning(f'Output path {finalWeightedPriorityScorePath} already exists, overwriting')
             else:
-                logging.warning(f'Output path {weightedPriorityScoreOutputPath} already exists, exiting')
-                raise FileExistsError(f'Output path {weightedPriorityScoreOutputPath} already exists')
+                logging.warning(f'Output path {finalWeightedPriorityScorePath} already exists, exiting')
+                raise FileExistsError(f'Output path {finalWeightedPriorityScorePath} already exists')
 
         with open(weightingsConfig) as f:
             weightings = json.load(f)
@@ -211,7 +232,7 @@ def main(polygonPath: str,
                 raise ValueError('Mismatch between priority layers and weightings')
 
         weightedPriorityScores = calculatePriorityScoreWeighting(mergedPriorityScores, weightings)
-        weightedPriorityScores.to_csv(weightedPriorityScoreOutputPath)
+        weightedPriorityScores.to_csv(finalWeightedPriorityScorePath)
         print(weightedPriorityScores)
         
         logging.info('---------------------------- Priority Score Weighting Complete ---------------------------- ')
@@ -222,11 +243,11 @@ def main(polygonPath: str,
     (startWallTime, startProcessTime) = startTimers()
     mcda = calculateMCDAForPriorityScoresWithEligibility(weightedPriorityScores, rawQeia)
 
-    if Path(mcda_output_path).exists() and not overwrite_mcda_output:
-        logging.warning(f'Output path {mcda_output_path} already exists, exiting')
-        raise FileExistsError(f'Output path {mcda_output_path} already exists')
+    if Path(finalMcdaPath).exists() and not overwriteMcda:
+        logging.warning(f'Output path {finalMcdaPath} already exists, exiting')
+        raise FileExistsError(f'Output path {finalMcdaPath} already exists')
     
-    mcda.to_csv(mcda_output_path)
+    mcda.to_csv(finalMcdaPath)
 
     (wallTime, processTime) = endTimers(startWallTime, startProcessTime)
     print(mcda)
@@ -250,21 +271,23 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--layer_config', type=str, required=False, default='layers.json', help='JSON file containing priority and eligibility layers')
     parser.add_argument('-w', '--weightings_config', type=str, required=False, default='weightings.json', help='JSON file containing priority weightings')
     parser.add_argument('-q', '--qeia_matrix', type=str, required=False, help='Raw QEIA impact score matrix file')
-    parser.add_argument('--precalculated_priority_scores', type=str, required=False, help='Optional path precalculated priority scores table as a CSV', default=None)
-    parser.add_argument('--priority_score_output_path', type=str, required=False, help='Path to output prioirity scores table as CSV for this run', default='priority_scores.csv')
-    parser.add_argument('--overwrite_priority_score_output', type=bool, required=False, help='Overwrite existing prioirity scores table if it exists', default=False, action=argparse.BooleanOptionalAction)
-    parser.add_argument('--precalculated_weighted_priority_scores', type=str, required=False, help='Optional path precalculated weighted priority scores table as a CSV', default=None)
-    parser.add_argument('--weighted_priority_score_output_path', type=str, required=False, help='Path to output prioirity scores table as CSV for this run', default='weighted_priority_scores.csv')
-    parser.add_argument('--overwrite_weighted_priority_score_output', type=bool, required=False, help='Overwrite existing weigthed prioirity scores table if it exists', default=False, action=argparse.BooleanOptionalAction)
-    parser.add_argument('--precalculated_eligibility', type=str, required=False, help='Optional path precalculated option eligiblity table expressed as boolean options (CSV/Parquet)', default=None)
-    parser.add_argument('--precalculated_eligibility_as_area', type=str, required=False, help='Optional path precalculated option eligiblity table expresssed as a coverage area (CSV/Parquet)', default=None)
-    parser.add_argument('--eligibility_options_id_column', type=str, required=False, help='Name of the ID column in the eligibility dataset', default='id_parcel')
-    parser.add_argument('--eligibility_options_output_path', type=str, required=False, help='Path to output eligibility options table as CSV for this run', default='eligibility.csv')
+    parser.add_argument('--use_precalculated_priority_scores', type=bool, required=False, help='Use precalculated priority scores table as a CSV', default=False, action=argparse.BooleanOptionalAction)
+    parser.add_argument('--priority_score_filename', type=str, required=False, help='Filename for priority scores table as CSV for this run', default='priority_scores.csv')
+    parser.add_argument('--overwrite_priority_scores', type=bool, required=False, help='Overwrite existing prioirity scores table if it exists', default=False, action=argparse.BooleanOptionalAction)
+    parser.add_argument('--use_precalculated_weighted_priority_scores', type=bool, required=False, help='Use precalculated weighted priority scores table as a CSV', default=False, action=argparse.BooleanOptionalAction)
+    parser.add_argument('--weighted_priority_score_filename', type=str, required=False, help='Filename for weighted prioirity scores table as CSV for this run', default='weighted_priority_scores.csv')
+    parser.add_argument('--overwrite_weighted_priority_scores', type=bool, required=False, help='Overwrite existing weigthed prioirity scores table if it exists', default=False, action=argparse.BooleanOptionalAction)
+    parser.add_argument('--use_precalculated_eligibility_options', type=bool, required=False, help='Use precalculated eligiblity options table as a CSV/Parquet', default=False, action=argparse.BooleanOptionalAction)
+    parser.add_argument('--eligibility_options_filename', type=str, required=False, help='Filename for eligibility options table as CSV for this run', default='eligibility.csv')
+    parser.add_argument('--overwrite_eligiblity_options', type=bool, required=False, help='Overwrite existing option eligiblity table if it exists', default=False, action=argparse.BooleanOptionalAction)
+    parser.add_argument('--precalculated_eligibility_is_area', type=bool, required=False, help='Optional path precalculated option eligiblity table is expresssed as a coverage area', default=False, action=argparse.BooleanOptionalAction)
+    parser.add_argument('--external_eligibility_options_path', type=str, required=False, help='Full path to an optional file for eligibility options as boolean table or area (CSV/Parquet)', default=None)
     parser.add_argument('--column_group_config_path', type=str, required=False, help='Path to a JSON file containing a configuration object for column group aggregation', default='')
-    parser.add_argument('--active_services_matrix_path', type=str, required=False, help='Path to output active services matrix as CSV for this run, if blank dont write', default='')
-    parser.add_argument('--overwrite_eligiblity_output', type=bool, required=False, help='Overwrite existing option eligiblity table if it exists', default=False, action=argparse.BooleanOptionalAction)
-    parser.add_argument('--mcda_output_path', type=str, required=False, help='Path to output MCDA table as CSV for this run', default='mcda.csv')
-    parser.add_argument('--overwrite_mcda_output', type=bool, required=False, help='Overwrite existing MCDA table if it exists', default=False, action=argparse.BooleanOptionalAction)
+    parser.add_argument('--active_services_matrix_filename', type=str, required=False, help='Path to output active services matrix as CSV for this run, if blank dont write', default='')
+    parser.add_argument('--mcda_filename', type=str, required=False, help='Filename for MCDA table as CSV for this run', default='mcda.csv')
+    parser.add_argument('--overwrite_mcda', type=bool, required=False, help='Overwrite existing MCDA table if it exists', default=False, action=argparse.BooleanOptionalAction)
+    parser.add_argument('--output_path', type=str, required=False, help='Optional base output path to store results in', default=None)
+    parser.add_argument('--runname', type=str, required=False, help='Optional run name to append to output file pre suffix', default=None)
 
     args = parser.parse_args()
 
@@ -274,18 +297,21 @@ if __name__ == '__main__':
         args.layer_config, 
         args.weightings_config,
         args.qeia_matrix, 
-        args.precalculated_priority_scores, 
-        args.priority_score_output_path, 
-        args.overwrite_priority_score_output, 
-        args.precalculated_weighted_priority_scores, 
-        args.weighted_priority_score_output_path, 
-        args.overwrite_weighted_priority_score_output, 
-        args.precalculated_eligibility, 
-        args.precalculated_eligibility_as_area,
-        args.eligibility_options_output_path, 
-        args.overwrite_eligiblity_output,
+        args.use_precalculated_priority_scores, 
+        args.priority_score_filename, 
+        args.overwrite_priority_scores, 
+        args.use_precalculated_weighted_priority_scores, 
+        args.weighted_priority_score_filename, 
+        args.overwrite_weighted_priority_scores, 
+        args.use_precalculated_eligibility_options, 
+        args.eligibility_options_filename,
+        args.overwrite_eligiblity_options, 
+        args.precalculated_eligibility_is_area,
+        args.external_eligibility_options_path,
         args.column_group_config_path,
-        args.active_services_matrix_path,
-        args.mcda_output_path,
-        args.overwrite_mcda_output
+        args.active_services_matrix_filename,
+        args.mcda_filename,
+        args.overwrite_mcda,
+        args.output_path,
+        args.runname
     )
