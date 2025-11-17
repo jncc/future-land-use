@@ -23,12 +23,12 @@ def main(polygonPath: str,
          usePrecalculatedPriorityScores: bool,
          priorityScoreFilename: str,
          overwritePriorityScores: bool,
-         usePrecalculatedWeightedPrioirityScores: bool,
+         usePrecalculatedWeightedPriorityScores: bool,
          weightedPriorityScoreFilename: str,
          overwriteWeightedPriorityScores: bool,
-         usePrecalcalculatedEligibility: bool,
-         eligibilityFilename: str,
-         overwriteEligibilityScores: bool,
+         usePrecalcalculatedEligibilityOptions: bool,
+         eligibilityOptionsFilename: str,
+         overwriteEligibilityOptions: bool,
          precalculatedEligibilityIsArea: bool,
          externalEligibilityOptionsPath: str,
          columnGroupConfigPath: str,
@@ -47,20 +47,24 @@ def main(polygonPath: str,
         layerConfig (str): Path to a JSON file containing a configuration object for layers (priority and eligibility)
         weightingsConfig (str): Path to a JSON file containing a configuration object for priority weightings
         qeiaMatrix (str): Path to a JSON file containing a configuration object for a QEIA matrix to process against
-        precalculatedPriorityScores (str): Optional, if not None use this path to load an existing CSV file output of the priority scores
-        priorityScoreOutputPath (str): Path to store intermediate priority scores to as a CSV
+        usePrecalculatedPriorityScores (bool): If true use the precalculated priority scores CSV file in the output path directory
+        priorityScoreFilename (str): Filename for priority scores CSV file, this file will be written to / read from the output path directory
         overwritePriorityScores (bool): Overwrite priority scores file if it already exists
-        precalculatedWeightedPrioirityScores (str): Optional, if not None use this path to load an existing CSV output of weighted priority scores
-        weightedPriorityScoreOutputPath (str): Path to store intermediate weighted priority scores to as a CSV
+        usePrecalculatedWeightedPriorityScores (bool): If true use the precalculated weighted priority scores CSV file in the output path directory
+        weightedPriorityScoreFilename (str): Filename for weighted priority scores CSV file, this file will be written to / read from the output path directory
         overwriteWeightedPriorityScores (bool): Overwrites weighted priority scores file if it already exists
-        precalculatedEligibility (str): Optional, if not none use this path to load an existing output of eligibilty options per polygon (CSV/Parquet)
-        precalculatedEligibility_as_area (str): Optional, if not none use this path to load an existing output of eligibilty options as area per polygon (CSV/Parquet)
+        usePrecalcalculatedEligibilityOptions (bool): If true use the precalculated eligibility options CSV/Parquet file in the output path directory
+        eligibilityOptionsFilename (str): Filename for eligibility options CSV file, this file will be written to / read from the output path directory
         eligibilityScoreOutputPath (str): Path to store intermediate eligibility options for the intput polygons
-        overwriteEligibilityScores (bool): Overwrites the eligibility options CSV file if it already exists
+        overwriteEligibilityOptions (bool): Overwrites the eligibility options CSV file if it already exists
+        precalculatedEligibilityIsArea (bool): If true the precalculated eligibility options file is expressed as area coverage rather than boolean
+        externalEligibilityOptionsPath (str): Full path to an optional file for eligibility options as boolean table or area (CSV/Parquet)
         columnGroupConfigPath (str): Path to a JSON file containing a configuration object for column group aggregation
         activeServicesMatrixPath (str): Path to store the active services matrix as a CSV, if blank dont write
-        mcda_output_path (str): Path to write final MCDA output file to
-        overwrite_mcda_output (bool): Overwrite MCDA file output if it already exists
+        mcdaFilename (str): Filename for MCDA CSV file, this file will be written to the output path directory
+        overwriteMcda (bool): Overwrite MCDA file output if it already exists
+        outputPath (str): Base output path to store results in
+        runName (str): Optional run name to append to output file pre suffix and to create a subdirectory in the output path
 
     Raises:
         FileExistsError: Raised if a file exists and has not been set to be overwritten
@@ -86,11 +90,11 @@ def main(polygonPath: str,
     if externalEligibilityOptionsPath:
         finalEligibilityOptionsPath = Path(externalEligibilityOptionsPath)
     else:
-        finalEligibilityOptionsPath = finalOutputPath.joinpath(get_output_filename(eligibilityFilename, runName))
+        finalEligibilityOptionsPath = finalOutputPath.joinpath(get_output_filename(eligibilityOptionsFilename, runName))
     finalMcdaPath = finalOutputPath.joinpath(get_output_filename(mcdaFilename, runName))
     
 
-    if usePrecalculatedWeightedPrioirityScores and finalWeightedPriorityScorePath.exists():
+    if usePrecalculatedWeightedPriorityScores and finalWeightedPriorityScorePath.exists():
         logging.info('Pre-calculated weighted priority scores found, skipping priority score calculation')
         logging.info('Reading pre-calculated weighted priority scores')
         weightedPriorityScores = pd.read_csv(finalWeightedPriorityScorePath)
@@ -140,7 +144,7 @@ def main(polygonPath: str,
         logging.info(f'Wall Time: {wallTime} seconds')
         logging.info(f'Process Time: {processTime} seconds')
 
-        if usePrecalcalculatedEligibility and finalEligibilityOptionsPath.exists():
+        if usePrecalcalculatedEligibilityOptions and finalEligibilityOptionsPath.exists():
             logging.info('Reading pre-calculated eligibility options')
             if Path(finalEligibilityOptionsPath).suffix == '.parquet':
                 optionEligbility = pd.read_parquet(finalEligibilityOptionsPath)
@@ -163,7 +167,7 @@ def main(polygonPath: str,
                 optionEligbility = optionEligbilityAreas.map(lambda x: not np.isnan(x))
         else:
             if Path(finalEligibilityOptionsPath).exists():
-                if overwriteEligibilityScores:
+                if overwriteEligibilityOptions:
                     logging.warning(f'Output path {finalEligibilityOptionsPath} already exists, overwriting')
                 else:
                     logging.warning(f'Output path {finalEligibilityOptionsPath} already exists, exiting')
