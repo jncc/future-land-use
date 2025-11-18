@@ -24,5 +24,5 @@ def get_output_path(base: str, run_name: str = None, output_path: str = None) ->
 def get_output_filename(filename: str, run_name: str = None) -> Path:
     if run_name:
         file = Path(filename)
-        return file.with_name(f'{file.stem}_{run_name}.{file.suffix}')
+        return file.with_name(f'{file.stem}_{run_name}{file.suffix}')
     return Path(filename)
