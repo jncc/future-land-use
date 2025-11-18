@@ -47,6 +47,9 @@ class PriorityVectorLayer(VectorLayer, PriorityLayer):
         VectorLayer.__init__(self, name, friendlyName, path)
         PriorityLayer.__init__(self)
         self.columnName = columnName
+
+        if self.dataTable is None or self.columnName not in self.dataTable.columns:
+            raise ValueError(f'Priority Vector Layer {name} does not contain the required score column: {self.columnName}')
     
     def extractScore(self, polygon: Polygon) -> np.floating:
         """Calculates the score for this layer intersected with the input Polygon, takes the maximum
