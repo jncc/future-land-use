@@ -2,10 +2,11 @@ import json
 import argparse
 import logging
 
-from common.helpers import get_output_path, get_output_filename
+from common.helpers import ConditionalFormatter, get_output_path, get_output_filename
 from common.layers import EligibilityLayer, PriorityLayer, processEligibilityLayers, processPriorityLayers
 from common.timing import startTimers, endTimers
 from common.qeia import QEIAMatrix
+from datetime import datetime
 from priority_scores import extractPriorityScoresForInputPolygons, calculatePriorityScoreWeighting, calculateActiveServices, calculateInitialPriorityScoreWeighting, groupColumnAggregation, mergeEligibilityOptions
 from eligibility import calculateOptionEligibilityForInputPolygons
 from mcda import calculateMCDAForPriorityScoresWithEligibility
@@ -13,7 +14,11 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(asctime)s: %(message)s')
+loggingFormatStr = '%(levelname)s: %(asctime)s: %(message)s'
+logging.basicConfig(
+    level = logging.INFO, 
+    format = loggingFormatStr
+)
 
 def main(polygonPath: str,
          polygonIdColumn: str,
@@ -81,20 +86,14 @@ def main(polygonPath: str,
         FileNotFoundError: Raised if an override file path has been set but the file does not exist
         ValueError: Raised if the input weightings config is not a superset of the intput priority layers
     '''
-    (totalStartWallTime, totalStartProcessTime) = startTimers()
-    
-    with open(qeiaMatrix) as f:
-        config = json.load(f)
-        rawQeia = QEIAMatrix(config)
-
-    logging.info(f'Imported Raw QEIA matrix')
-
-    with open(layerConfig) as f:
-        config = json.load(f)
-
-    (procStartWallTime, procStartProcessTime) = startTimers()
-
     finalOutputPath = get_output_path(outputPath if outputPath else '.', runName)
+
+    # Create file handler for logging to output path directory and attach to root logger
+    fileHandler = logging.FileHandler(finalOutputPath.joinpath(f'execution_{datetime.now().strftime("%Y%m%d-%H%M%S")}.log'))
+    fileHandler.formatter = ConditionalFormatter(loggingFormatStr)
+    fileHandler.setLevel(logging.INFO)
+    logging.getLogger().addHandler(fileHandler)
+    
     logging.info(f'Using output path at {finalOutputPath}')
 
     if overridePriorityScorePath:
@@ -132,6 +131,18 @@ def main(polygonPath: str,
         finalMcdaPath = finalOutputPath.joinpath(get_output_filename(mcdaFilename, runName))
         logging.info(f'Using MCDA path at {finalMcdaPath}')
     
+    (totalStartWallTime, totalStartProcessTime) = startTimers()
+    
+    with open(qeiaMatrix) as f:
+        config = json.load(f)
+        rawQeia = QEIAMatrix(config)
+
+    logging.info(f'Imported Raw QEIA matrix')
+
+    with open(layerConfig) as f:
+        config = json.load(f)
+
+    (procStartWallTime, procStartProcessTime) = startTimers()
 
     if usePrecalculatedWeightedPriorityScores and finalWeightedPriorityScorePath.exists():
         logging.info('Pre-calculated weighted priority scores found, skipping priority score calculation')
@@ -164,7 +175,7 @@ def main(polygonPath: str,
         logging.info('---------------------------- Priority Score Extraction Complete ---------------------------- ')
         logging.info(f'Wall Time: {wallTime} seconds')
         logging.info(f'Process Time: {processTime} seconds')
-        print(priorityScores)
+        logging.info(priorityScores, extra={'simple': True})
 
         (startWallTime, startProcessTime) = startTimers()
         logging.info('Calculating active services from priority scores')
@@ -225,7 +236,7 @@ def main(polygonPath: str,
             logging.info('---------------------------- Eligibility Discovery Complete ---------------------------- ')
             logging.info(f'Wall Time: {wallTime} seconds')
             logging.info(f'Process Time: {processTime} seconds')
-        print(optionEligbility)
+        logging.info(optionEligbility, extra={'simple': True})
 
         mergedPriorityScores = mergeEligibilityOptions(priorityScores, optionEligbility)
 
@@ -241,7 +252,7 @@ def main(polygonPath: str,
 
                 mergedPriorityScores = groupColumnAggregation(mergedPriorityScores, columnGroup, columnGroupConfig[columnGroup]['options'], columnGroupConfig[columnGroup]['operation'])
         
-        print(mergedPriorityScores)
+        logging.info(mergedPriorityScores, extra={'simple': True})
 
         logging.info('---------------------------- Column Group Aggregation Complete ---------------------------- ')
         logging.info(f'Wall Time: {wallTime} seconds')
@@ -251,7 +262,7 @@ def main(polygonPath: str,
         logging.info('Initial Priority Score Weighting')
 
         mergedPriorityScores = calculateInitialPriorityScoreWeighting(mergedPriorityScores)
-        print(mergedPriorityScores)
+        logging.info(mergedPriorityScores, extra={'simple': True})
 
         logging.info('---------------------------- Initial Priority Score Weighting Complete ---------------------------- ')
         logging.info(f'Wall Time: {wallTime} seconds')
@@ -274,7 +285,7 @@ def main(polygonPath: str,
 
         weightedPriorityScores = calculatePriorityScoreWeighting(mergedPriorityScores, weightings)
         weightedPriorityScores.to_csv(finalWeightedPriorityScorePath)
-        print(weightedPriorityScores)
+        logging.info(weightedPriorityScores, extra={'simple': True})
         
         logging.info('---------------------------- Priority Score Weighting Complete ---------------------------- ')
         logging.info(f'Wall Time: {wallTime} seconds')
@@ -291,7 +302,7 @@ def main(polygonPath: str,
     mcda.to_csv(finalMcdaPath)
 
     (wallTime, processTime) = endTimers(startWallTime, startProcessTime)
-    print(mcda)
+    logging.info(mcda, extra={'simple': True})
     logging.info(f'Wall Time: {wallTime} milliseconds')
     logging.info(f'Process Time: {processTime} milliseconds')
 
