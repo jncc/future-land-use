@@ -1,10 +1,7 @@
 from pathlib import Path
 
-def get_output_path(base: str, run_name: str = None, output_path: str = None) -> Path:
-    base_path = Path(base)
-
-    if output_path:
-        base_path = base_path.joinpath(Path(output_path))
+def get_output_path(base: str, run_name: str = None) -> Path:
+    base_path = Path(base).resolve()
     
     if run_name:
         base_path = base_path.joinpath(Path(run_name))
