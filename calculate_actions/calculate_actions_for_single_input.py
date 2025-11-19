@@ -3,17 +3,20 @@ import argparse
 import logging
 import shapely
 
+from common.helpers import ConditionalFormatter, get_output_path, get_output_filename
 from common.layers import EligibilityLayer, PriorityLayer, processEligibilityLayers, processPriorityLayers
 from common.timing import startTimers, endTimers
 from common.qeia import QEIAMatrix
+from datetime import datetime
 from priority_scores import extractPriorityScoresForInputPolygon, calculateActiveServices, calculateInitialPriorityScoreWeighting, calculatePriorityScoreWeighting, groupColumnAggregation, mergeEligibilityOptions
 from eligibility import calculateOptionEligibilityForInputPolygon
 from mcda import calculateMCDAForPriorityScoresWithEligibility
 from pathlib import Path
 
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(asctime)s: %(message)s')
+loggingFormatStr = '%(levelname)s: %(asctime)s: %(message)s'
+logging.basicConfig(level=logging.INFO, format=loggingFormatStr)
 
-def main(polyId: str, wkt: str, layerConfig: str, weightingsConfig: str, columnGroupConfigPath: str, qeiaMatrix: str, output: str):
+def main(polyId: str, wkt: str, layerConfig: str, weightingsConfig: str, columnGroupConfigPath: str, qeiaMatrix: str, outputPath: str, runName: str):
     """Process a single polygon through to MCDA, using weighted priority scores,
     eligible option layers and an input QEIA matrix
 
@@ -25,6 +28,20 @@ def main(polyId: str, wkt: str, layerConfig: str, weightingsConfig: str, columnG
         qeiaMatrix (str): Path to a JSON file containing a configuration object for a QEIA matrix to process against
         output (str): Optional path to store MCDA output to as a .csv file
     """
+    outputPath = get_output_path(outputPath, runName)
+
+    # Create file handler for logging to output path directory and attach to root logger
+    fileHandler = logging.FileHandler(outputPath.joinpath(f'single_polygon_execution_{datetime.now().strftime("%Y%m%d-%H%M%S")}.log'))
+    fileHandler.formatter = ConditionalFormatter(loggingFormatStr)
+    fileHandler.setLevel(logging.INFO)
+    logging.getLogger().addHandler(fileHandler)
+
+    finalActiveServicesPath = outputPath.joinpath(get_output_filename('active_services.csv', runName))
+    finalPriorityScoresPath = outputPath.joinpath(get_output_filename('priority_scores.csv', runName))
+    finalWeightedPriorityScoresPath = outputPath.joinpath(get_output_filename('weighted_priority_scores.csv', runName))
+    finalEligibilityPath = outputPath.joinpath(get_output_filename('eligibility_options.csv', runName))
+    finalMCDAPath = outputPath.joinpath(get_output_filename('mcda.csv', runName))
+
     (totalStartWallTime, totalStartProcessTime) = startTimers()
     logging.info(f'Generating actions for polygon {polyId} defined in {wkt}')
 
@@ -60,18 +77,21 @@ def main(polyId: str, wkt: str, layerConfig: str, weightingsConfig: str, columnG
 
     logging.info('Calculate priority scores')
     priorityScores = extractPriorityScoresForInputPolygon(polyId, polygon, priorityLayers)
+    priorityScores.to_csv(finalPriorityScoresPath, index=True, index_label='id')
     
     (wallTime, processTime) = endTimers(startWallTime, startProcessTime, 1)
     logging.info('---------------------------- Priority Scores Complete ---------------------------- ')
     logging.info(f'Wall Time: {wallTime} seconds')
     logging.info(f'Process Time: {processTime} seconds')
-    print(priorityScores)
+    logging.info(priorityScores, extra={'simple': True})
     
     (startWallTime, startProcessTime) = startTimers()
     logging.info('Calculating active services from priority scores')
 
     activeServicesMatrix = calculateActiveServices(priorityScores, "", False)
+    activeServicesMatrix.to_csv(finalActiveServicesPath, index=True, index_label='id')
     activeServicesMatrix.drop(activeServicesMatrix.columns.difference(['id', 'totalServices']), axis=1, inplace=True)
+    logging.info(activeServicesMatrix, extra={'simple': True})
 
     priorityScores = priorityScores.merge(activeServicesMatrix, on='id', how='left')
     logging.info('---------------------------- Active Serices Calculation Complete ---------------------------- ')
@@ -86,13 +106,13 @@ def main(polyId: str, wkt: str, layerConfig: str, weightingsConfig: str, columnG
     (startWallTime, startProcessTime) = startTimers()
 
     optionEligbility = calculateOptionEligibilityForInputPolygon(polyId, polygon, eligibilityLayers)
+    optionEligbility.to_csv(finalEligibilityPath, index=True, index_label='id')
         
     (wallTime, processTime) = endTimers(startWallTime, startProcessTime, 1)
     logging.info('---------------------------- Eligibility Discovery Complete ---------------------------- ')
     logging.info(f'Wall Time: {wallTime} seconds')
     logging.info(f'Process Time: {processTime} seconds')
-
-    print(optionEligbility)
+    logging.info(optionEligbility, extra={'simple': True})
 
     mergedPriorityScores = mergeEligibilityOptions(priorityScores, optionEligbility)
 
@@ -112,7 +132,7 @@ def main(polyId: str, wkt: str, layerConfig: str, weightingsConfig: str, columnG
 
             mergedPriorityScores = groupColumnAggregation(mergedPriorityScores, columnGroup, columnGroupConfig[columnGroup]['options'], columnGroupConfig[columnGroup]['operation'])
     
-    print(mergedPriorityScores)
+    logging.info(mergedPriorityScores, extra={'simple': True})
 
     logging.info('---------------------------- Column Group Aggregation Complete ---------------------------- ')
     logging.info(f'Wall Time: {wallTime} seconds')
@@ -122,7 +142,7 @@ def main(polyId: str, wkt: str, layerConfig: str, weightingsConfig: str, columnG
     logging.info('Initial Priority Score Weighting')
 
     mergedPriorityScores = calculateInitialPriorityScoreWeighting(mergedPriorityScores)
-    print(mergedPriorityScores)
+    logging.info(mergedPriorityScores)
 
     logging.info('---------------------------- Initial Priority Score Weighting Complete ---------------------------- ')
     logging.info(f'Wall Time: {wallTime} seconds')
@@ -137,7 +157,8 @@ def main(polyId: str, wkt: str, layerConfig: str, weightingsConfig: str, columnG
             raise ValueError('Mismatch between priority layers and weightings')
 
     weightedPriorityScores = calculatePriorityScoreWeighting(mergedPriorityScores, weightings)
-    print(weightedPriorityScores)
+    weightedPriorityScores.to_csv(finalWeightedPriorityScoresPath, index=True)
+    logging.info(weightedPriorityScores)
     
     logging.info('---------------------------- Priority Score Weighting Complete ---------------------------- ')
     logging.info(f'Wall Time: {wallTime} seconds')
@@ -147,7 +168,8 @@ def main(polyId: str, wkt: str, layerConfig: str, weightingsConfig: str, columnG
     (startWallTime, startProcessTime) = startTimers()
     mcda = calculateMCDAForPriorityScoresWithEligibility(weightedPriorityScores, rawQeia)
     (wallTime, processTime) = endTimers(startWallTime, startProcessTime)
-    print(mcda)
+    mcda.to_csv(finalMCDAPath, index=True)
+    logging.info(mcda, extra={'simple': True})
     
     logging.info(f'Wall Time: {wallTime} milliseconds')
     logging.info(f'Process Time: {processTime} milliseconds')
@@ -164,13 +186,14 @@ def main(polyId: str, wkt: str, layerConfig: str, weightingsConfig: str, columnG
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate action scores for a given polygon land parcel")
-    parser.add_argument('-i', '--poly_id', type=str, required=True, help="Unique ID for the polygon")
-    parser.add_argument('-p', '--polygon_wkt', type=str, required=True, help="WKT file containing polygon geometry")
-    parser.add_argument('-l', '--layer_config', type=str, required=True, default="layers.json", help="JSON file containing priority and eligibility layers")
-    parser.add_argument('-c', '--column_group_config_path', type=str, required=False, default="", help="JSON file containing column group aggregation configuration")
-    parser.add_argument('-w', '--weightings_config', type=str, required=True, default="weightings.json", help="JSON file containing priority weightings")
-    parser.add_argument('-q', '--qeia_matrix', type=str, required=True, help="Raw QEIA impact score matrix file")
-    parser.add_argument('-o', '--output', type=str, required=False, help="Optional filepath to store output MCDA data as a .csv file")
+    parser.add_argument('-i', '--polygon-id', type=str, required=True, help="Unique ID for the polygon")
+    parser.add_argument('-p', '--polygon-wkt', type=str, required=True, help="WKT file containing polygon geometry")
+    parser.add_argument('-l', '--layer-config', type=str, required=True, default="layers.json", help="JSON file containing priority and eligibility layers")
+    parser.add_argument('-c', '--column-group-config-path', type=str, required=False, default="", help="JSON file containing column group aggregation configuration")
+    parser.add_argument('-w', '--weightings-config', type=str, required=True, default="weightings.json", help="JSON file containing priority weightings")
+    parser.add_argument('-q', '--qeia-matrix', type=str, required=True, help="Raw QEIA impact score matrix file")
+    parser.add_argument('--output-path', type=str, required=True, help='Base output path to store results in')
+    parser.add_argument('--run-name', type=str, required=False, help='Optional run name to append to output file pre suffix', default=None)
 
     args = parser.parse_args()
 

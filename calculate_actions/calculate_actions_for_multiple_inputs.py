@@ -343,7 +343,7 @@ if __name__ == '__main__':
     parser.add_argument('--mcda-filename', type=str, required=False, help='Filename for MCDA table as CSV for this run', default='mcda.csv')
     parser.add_argument('--overwrite-mcda', type=bool, required=False, help='Overwrite existing MCDA table if it exists', default=False, action=argparse.BooleanOptionalAction)
     parser.add_argument('--override-mcda-path', type=str, required=False, help='Full path to an optional file for MCDA table as CSV', default=None)
-    parser.add_argument('--output-path', type=str, required=True, help='Optional base output path to store results in')
+    parser.add_argument('--output-path', type=str, required=True, help='Base output path to store results in')
     parser.add_argument('--run-name', type=str, required=False, help='Optional run name to append to output file pre suffix', default=None)
 
     args = parser.parse_args()
