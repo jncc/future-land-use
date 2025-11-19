@@ -101,13 +101,13 @@ def main(priorityInputPath: str,
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate action scores for a given polygon land parcel")
-    parser.add_argument('-p', '--priority_input', type=str, required=True, help="Input CSV file for priority layer config")
-    parser.add_argument('-e', '--eligibility_input', type=str, required=True, help="Input CSV file for eligibility config")
+    parser.add_argument('-p', '--priority-input', type=str, required=True, help="Input CSV file for priority layer config")
+    parser.add_argument('-e', '--eligibility-input', type=str, required=True, help="Input CSV file for eligibility config")
     parser.add_argument('--eligibility-input-is-precalculated', type=bool, required=False, help='Flag indicating eligibility input is precalculated rather than direct files', default=False, action=argparse.BooleanOptionalAction)
     parser.add_argument('-o', '--output', type=str, required=True, help='Path to write output to')
-    parser.add_argument('--priority_base_path', type=str, required=False, default=None, help='base path to replace found priority paths')
-    parser.add_argument('--eligibility_base_path', type=str, required=False, default=None, help='base path to replace found eligibility paths')
-    parser.add_argument('--prefer_raster', type=bool, default=False, action=argparse.BooleanOptionalAction)
+    parser.add_argument('--priority-base-path', type=str, required=False, default=None, help='base path to replace found priority paths')
+    parser.add_argument('--eligibility-base-path', type=str, required=False, default=None, help='base path to replace found eligibility paths')
+    parser.add_argument('--prefer-raster', type=bool, default=False, action=argparse.BooleanOptionalAction)
 
     args = parser.parse_args()
 
