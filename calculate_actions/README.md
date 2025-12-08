@@ -234,7 +234,7 @@ This will output a CSV with the MCDA output to `mcda.csv` as well as intermediat
  - `--mcda-filename {filename}` - [**Optional**] Filename pattern to store output MCDA CSV file under [Default: `mcda.csv`]
  - `--overwrite-mcda / --no-overwrite-mcda` - [**Optional**] Overwrite MCDA output file if it already exists [Default: False]
  - `--override-mcda-path {path}` - [**Optional**] Path to override the MCDA CSV file to use for writing to / reading from if using precalculated MCDA output [Default: None]
- - `--output-path {path}` - [**Optional**] Base path to store all output files under, if not specified files will be stored in the current working directory [Default: None]
+ - `--output-path {path}` - Base path to store all output files under [Default: None]
  - `--run-name {name}` - [**Optional**] Name to append to all output files, if not specified files will be created as specified [Default: None]
 
 You can use the `--use-precalculated-x` arguments to input previously run outputs for the relevant steps to speed up processing while adjusting elements of the inputs. They would typically be used in conjunction with the `--override-x-path` arguments to specify the path to the precalculated files.
