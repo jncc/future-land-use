@@ -2,13 +2,11 @@ import pandas as pd
 import logging
 import re
 
-def calculateActiveServices(priorityScores: pd.DataFrame, outputPath: str, writeOutput: bool = False) -> pd.DataFrame:
+def calculateActiveServices(priorityScores: pd.DataFrame) -> pd.DataFrame:
     """Calculate the active services from the priority scores DataFrame, and optionally write to a CSV file
 
     Args:
         priorityScores (pd.DataFrame): Dataframe containing the priority scores for each input polygon ID
-        outputPath (str): Path to save the active services matrix CSV file
-        writeOutput (bool, optional): Whether to write the output to a file. Defaults to False.
     
     Raises:
         ValueError: If no priority scores columns are found for a service in the priorityScores DataFrame
@@ -29,10 +27,6 @@ def calculateActiveServices(priorityScores: pd.DataFrame, outputPath: str, write
         ecosystemServiceApplicable[service] = priorityScores[serviceColumn].fillna(0).any(axis = 1)
 
     ecosystemServiceApplicable['totalServices'] = ecosystemServiceApplicable.sum(axis=1)
-
-    if writeOutput:
-        print(ecosystemServiceApplicable)
-        ecosystemServiceApplicable.to_csv(outputPath, index=True) 
 
     return ecosystemServiceApplicable
 

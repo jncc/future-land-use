@@ -201,35 +201,52 @@ but the output can be saved to a file using the `-o` switch.
 
 ## Process multiple polygons
 
-To run locally with multiple polygons, enter the virtual environment you careated and run the script;
+To run locally with multiple polygons, enter the virtual environment you created and run the script;
 
 ```bash
-python calculate_actions_for_multiple_inputs.py -i polygons.pkg -l layers.json -w weightings.json -q qeia.json --priority_score_output_path priority_scores.csv --weighted_priority_score_output_path weighted_priority_scores.csv --eligibility_options_output_path eligibility.csv --mcda_output_path mcda.csv
+python calculate_actions_for_multiple_inputs.py -i polygons.pkg -l layers.json -w weightings.json -q qeia.json
 ```
 
 This will output a CSV with the MCDA output to `mcda.csv` as well as intermediate priority / weighted priority scores and an eligiblity option table that can be used in the script as precalculated inputs, the full list of inputs are described below;
 
- - `-i / --poly_source {path}` - Path to polygon datasource, ideally a GeoPackage, but should function with any vector format
- - `-c / --polygon_id_column {name}` - [**Optional**] allows user to specify the attribute column name to use as an ID for polygons [Default: NGC]
- - `-l / --layer_config {path}` - Path to JSON file containing priority and eligibility layers
- - `-w / --weightings_config {path}`- Path to JSON file containing priority weightings
- - `-q / --qeia_matrix {path}` - Path to JSON file containing QEIA matrix
- - `--precalculated_priority_scores {path}` - [**Optional**] Path to CSV containing precalculated priority scores (skipping priority score calcuation step if this argument is present)
- - `--priority_score_output_path {path}` - [**Optional**] Path to store calculated priority scores out to as CSV [Default: `priority_scores.csv`]
- - `--overwrite_priority_score_output` - [**Optional**] Overwrite priority score output if it exists [Default: False]
- - `--precalculated_weighted_priority_scores {path}` - [**Optional**] Path to CSV containing precalculated weighted priority scores (skipping priority and weighted priority score calculations stpes if argument is present)
- - `--weighted_priority_score_output_path {path}` - [**Optional**] Path to store calculated weighted priority scores out to as CSV [Default: `weighted_priority_scores.csv`]
- - `--overwrite_weighted_priority_score_output` - [**Optional**] Overwrite weighted priority score output if it exists [Default: False]
- - `--precalculated_eligibility {path}` - [**Optional**] Path to CSV containing precalculated eligiblity options for polygons (skipping eligibility option step if this argument is present)
- - `--precalculated_eligibility_as_area {path}` - [**Optional**] Path to CSV containing precalculated eligiblity options as area for polygons (skipping eligibility option step if this argument is present)
- - `--eligibility_options_output_path {path}` - [**Optional**] Path to store calculated eligibilty options as CSV [Default: `eligibility.csv`]
- - `--overwrite_eligiblity_output` - [**Optional**] Overwrite eligibility option output if it exists [Default: False]
- - `--column_group_config_path` - [**Optional**] Path to a JSON file containing a configuration object for column group aggregation, if blank, no aggregation will be performed [Default: ]
- - `--active_services_matrix_path` - [**Optional**] Path to output active services matrix as CSV for this run, if blank dont write [Default: ]
- - `--mcda_output_path {path}` - [**Optional**] Path to store output CSV of the MCDA analysis step [Default: `mcda.csv`]
- - `--overwrite_mcda_output` - [**Optional**] Overwrite MCDA output if it exists [Default: False]
+ - `-i / --polygon-source {path}` - Path to polygon datasource, ideally a GeoPackage, but should function with any vector format
+ - `-c / --polygon-id-column {name}` - [**Optional**] allows user to specify the attribute column name to use as an ID for polygons [Default: NGC]
+ - `-l / --layer-config {path}` - Path to JSON file containing priority and eligibility layers
+ - `-w / --weightings-config {path}`- Path to JSON file containing priority weightings
+ - `-q / --qeia-matrix {path}` - Path to JSON file containing QEIA matrix
+ - `--use-precalculated-priority-scores / --no-use-precalculated-priority-scores` - [**Optional**] Use precalculated priority scores, uses the existing filename for this run or the override file if specified [Default: False]
+ - `--priority-score-filename {filename}` - [**Optional**] Filename pattern to store output priority score CSV file under [Default: `priority_scores.csv`]
+ - `--overwrite-priority-scores / --no-overwrite-priority-scores` - [**Optional**] Overwrite priority score output file if it already exists [Default: False]
+ - `--override-priority-score-path {path}` - [**Optional**] Path to override the priority score CSV file to use for writing to / reading from if using precalculated priority scores [Default: None]
+ - `--use-precalculated-weighted-priority-scores / --no-use-precalculated-weighted-priority-scores` - [**Optional**] Use precalculated weighted priority scores, uses the existing filename for this run or the override file if specified [Default: False]
+ - `--weighted-priority-score-filename {filename}` - [**Optional**] Filename pattern to store calculated weighted priority scores out to as CSV [Default: `weighted_priority_scores.csv`]
+ - `--overwrite-weighted-priority-scores / --no-overwrite-weighted-priority-scores` - [**Optional**] Overwrite weighted priority score output if it exists [Default: False]
+ - `override-weighted-priority-score-path {path}` - [**Optional**] Path to override the weighted priority score CSV file to use for writing to / reading from if using precalculated weighted priority scores [Default: None]
+ - `active-services-matrix-filename {path}` - [**Optional**] Path to CSV containing active services matrix to filter priority layers by [Default: None]
+ - `--write-active-services-matrix / --no-write-active-services-matrix` - [**Optional**] Write active services matrix to file at the path specified above [Default: False]
+ - `--override-active-services-matrix-path' {path}` - [**Optional**] Path to override the active services matrix CSV file to use for writing to / reading from if using precalculated active services matrix [Default: None]
+ - `--use-precalculated-eligibility-options / --no-use-precalculated-eligibility-options` - [**Optional**] Use precalculated eligibility options, uses the existing filename for this run or the override file if specified [Default: False]
+ - `--eligibility-options-filename {filename}` - [**Optional**] Filename pattern to store calculated eligiblity options out to as CSV [Default: `eligibility.csv`]
+ - `--overwrite-eligibility-options / --no-overwrite-eligibility-options` - [**Optional**] Overwrite eligibility option output if it exists [Default: False]
+ - `--precalculated-eligibility-is-area / --no-precalculated-eligibility-is-area` - [**Optional**] Indicates that the precalculated eligibility options file contains area values rather than boolean TRUE/FALSE values [Default: False]
+ - `--override-eligibility-options-path {path}` - [**Optional**] Path to override the eligibility options CSV file to use for writing to / reading from if using precalculated eligibility options [Default: None]
+ - `--column-group-config-path` - [**Optional**] Path to a JSON file containing a configuration object for column group aggregation, by default no aggregation will be performed [Default: None]
+ - `--mcda-filename {filename}` - [**Optional**] Filename pattern to store output MCDA CSV file under [Default: `mcda.csv`]
+ - `--overwrite-mcda / --no-overwrite-mcda` - [**Optional**] Overwrite MCDA output file if it already exists [Default: False]
+ - `--override-mcda-path {path}` - [**Optional**] Path to override the MCDA CSV file to use for writing to / reading from if using precalculated MCDA output [Default: None]
+ - `--output-path {path}` - Base path to store all output files under [Default: None]
+ - `--run-name {name}` - [**Optional**] Name to append to all output files, if not specified files will be created as specified [Default: None]
 
-You can use the `--precalculated_x` arguments to input previously run outputs for the relevant steps to speed up processing while adjusting elements of the inputs.
+You can use the `--use-precalculated-x` arguments to input previously run outputs for the relevant steps to speed up processing while adjusting elements of the inputs. They would typically be used in conjunction with the `--override-x-path` arguments to specify the path to the precalculated files.
+
+For example if you had already calculated the priority scores and eligibility options for a set of polygons, and wanted to adjust the weightings and QEIA matrix you could run;
+
+```bash
+python calculate_actions_for_multiple_inputs.py -i polygons.pkg -l layers.json -w weightings.json -q qeia.json --use-precalculated-priority-scores --override-priority-score-path ./outputs/priority_scores.csv --use-precalculated-eligibility-options --override-eligibility-options-path ./outputs/eligibility.csv
+``` 
+The system will also accept precalculated eligiblity option files in parquet format if the file extension is `.parquet`. NOTE: This only applies to the precalculated input files, all output files will be written as CSV at present.
+
+The options for output file naming and paths allow you to control where the outputs are stored and what they are named. All output files will be stored in the location specified using `--output-path`. If you specify a `--run-name` this will be appended to the filenames before the file extension, i.e. if you specify a run name of `test1` the MCDA output file will be named `mcda_test1.csv` and all files will be put into a folder of the `run-name` under the path specified by `--output-path`.
 
 ## Utility Scripts
 
