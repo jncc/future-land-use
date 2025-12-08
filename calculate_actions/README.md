@@ -246,7 +246,7 @@ python calculate_actions_for_multiple_inputs.py -i polygons.pkg -l layers.json -
 ``` 
 The system will also accept precalculated eligiblity option files in parquet format if the file extension is `.parquet`. NOTE: This only applies to the precalculated input files, all output files will be written as CSV at present.
 
-The options for output file naming and paths allow you to control where the outputs are stored and what they are named, by default they will be stored in the current working directory with standard names. If you specifiy an output path using `--output-path` all output files will be stored in that location. If you specify a `--run-name` this will be appended to the filenames before the file extension, i.e. if you specify a run name of `test1` the MCDA output file will be named `mcda_test1.csv` and all files will be put into a folder of the `run-name` under the path specified by `--output-path` (or `.` if no specified).
+The options for output file naming and paths allow you to control where the outputs are stored and what they are named. All output files will be stored in the location specified using `--output-path`. If you specify a `--run-name` this will be appended to the filenames before the file extension, i.e. if you specify a run name of `test1` the MCDA output file will be named `mcda_test1.csv` and all files will be put into a folder of the `run-name` under the path specified by `--output-path`.
 
 ## Utility Scripts
 
