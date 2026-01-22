@@ -273,11 +273,12 @@ python calculate_actions_for_multiple_inputs.py -c id -i ./testing/precalculated
 Run the utility script `utility/generate_column_aggregation_templates.py` to generate a template for column aggregation based on the layers in the configuration file.
 
 ```bash
-python utility/generate_column_aggregation_templates.py -a maintain_snh.csv -o Priority_Biod_MaintainSNH
+python utility/generate_column_aggregation_templates.py -a maintain_snh.csv -n Priority_Biod_MaintainSNH -o column_aggregation.json
 ```
 
  - `-a / --aggregation_config` - Path to CSV file containing column aggregation configuration as a TRUE/FALSE matrix outlined below
- - `'-n / --aggregation_name` - Name of the aggregation to generate, this will be used as the key in the output JSON file i.e. `Priority_Biod_MaintainSNH`
+ - `-n / --aggregation_name` - Name of the aggregation to generate, this will be used as the key in the output JSON file i.e. `Priority_Biod_MaintainSNH`
+ - `-o / --output_path` - [**Optional**] Output file for aggregation JSON [Default: None]
 
 The input CSV file should be in the form of a TRUE/FALSE matrix where each row is an eligibility option and each column is a priority layer code (that will be appended to the aggregation name to create
 the full priority layer ID), with `TRUE` indicating that the priority layer should be included in the aggregation for that option and `FALSE` indicating it should not. For example:
