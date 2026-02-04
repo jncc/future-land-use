@@ -84,25 +84,25 @@ def calculateInitialPriorityScoreWeighting(priorityScores: pd.DataFrame) -> pd.D
 
     return priorityScores.apply(lambda row: row[data_columns] / row['serviceSum'], axis=1).drop(columns=['serviceSum','totalServices'], errors='ignore')
 
-def calculatePriorityScoreWeighting(priortyScores: pd.DataFrame, weigthings: dict[str, float]) -> pd.DataFrame:
+def calculatePriorityScoreWeighting(priorityScores: pd.DataFrame, weightings: dict[str, float]) -> pd.DataFrame:
     """Calculate the priority score weighting based on the provided weights
 
     Args:
-        priortyScores (pd.DataFrame): Dataframe containing the priority scores for each input polygon ID
-        weigthings (dict[str, float]): A dictionary containing the weights for each priority layer
+        priorityScores (pd.DataFrame): Dataframe containing the priority scores for each input polygon ID
+        weightings (dict[str, float]): A dictionary containing the weights for each priority layer
 
     Returns:
         pd.DataFrame: A DataFrame containing the weighted priority scores
     """
-    for layer, weight in weigthings.items():
-        if layer in priortyScores.columns:
-            priortyScores[layer] *= weight
+    for layer, weight in weightings.items():
+        if layer in priorityScores.columns:
+            priorityScores[layer] *= weight
         else:
             raise ValueError(f'Layer {layer} not found in priority scores columns')
 
     # Normalize the scores to ensure they sum to 1
-    priortyScores['total'] = priortyScores.sum(axis=1)
-    priortyScores = priortyScores.apply(lambda row: row / row['total'], axis=1)
-    priortyScores.drop(columns=['total'], inplace=True)
+    priorityScores['total'] = priorityScores.sum(axis=1)
+    priorityScores = priorityScores.apply(lambda row: row / row['total'], axis=1)
+    priorityScores.drop(columns=['total'], inplace=True)
 
-    return priortyScores
+    return priorityScores
