@@ -188,7 +188,7 @@ def main(polygonPath: str,
         activeServicesMatrix.drop(activeServicesMatrix.columns.difference(['id', 'totalServices']), axis=1, inplace=True)
 
         priorityScores = priorityScores.merge(activeServicesMatrix, on='id', how='left')
-        logging.info('---------------------------- Active Serices Calculation Complete ---------------------------- ')
+        logging.info('---------------------------- Active Services Calculation Complete ---------------------------- ')
         logging.info(f'Wall Time: {wallTime} seconds')
         logging.info(f'Process Time: {processTime} seconds')
 
