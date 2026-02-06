@@ -51,12 +51,12 @@ print(alt_pS_out)
 # area)
 alt_pS_2 = alt_pS
 # Get unique services present
-services = [i.split("_")[1] for i in data_columns]
+services = list(set([i.split("_")[1] for i in data_columns]))
 print(services)
-unique_services = list(set(services))
-print(unique_services)
+# unique_services = list(set(services))
+# print(unique_services)
 
-for i in unique_services:
+for i in services:
     print("Service: ", i)
     service_columns = list(filter(lambda k: i in k, data_columns))
     print("Service columns: ", service_columns)
