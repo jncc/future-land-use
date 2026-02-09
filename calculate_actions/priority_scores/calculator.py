@@ -92,6 +92,10 @@ def calculateInitialPriorityScoreWeighting(priorityScores: pd.DataFrame) -> pd.D
         serviceColumns.append("serviceSum")
         priorityScores[serviceColumns] = priorityScores[serviceColumns].apply(lambda row: row / row['serviceSum'], axis=1)
         priorityScores.drop(columns=['serviceSum'], inplace=True)
+    
+    # Multiply by 1/n(ES) so that scores sum to 1 per parcel
+    # (In the future this will be replaced with the service weighting calculations)
+    priorityScores = priorityScores.apply(lambda row: (1 / row['totalServices']) * row[data_columns], axis=1)
 
     return priorityScores
 
