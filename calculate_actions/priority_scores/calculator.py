@@ -79,10 +79,21 @@ def calculateInitialPriorityScoreWeighting(priorityScores: pd.DataFrame) -> pd.D
         pd.DataFrame: A DataFrame containing the initial priority score weighting
     """
     data_columns = priorityScores.columns.difference(['id', 'option', 'totalServices'])
-    priorityScores['serviceSum'] = priorityScores[data_columns].sum(axis=1)
-    priorityScores['serviceSum'] = priorityScores.groupby(['id'])['serviceSum'].transform("max")
 
-    return priorityScores.apply(lambda row: row[data_columns] / row['serviceSum'], axis=1).drop(columns=['serviceSum','totalServices'], errors='ignore')
+    # Normalise so that scores sum to 1 per ecosystem service
+    ecosystemServices = list(set([i.split("_")[1] for i in data_columns]))
+
+    for service in ecosystemServices:
+        serviceColumns = list(filter(lambda k: service in k, data_columns))
+
+        priorityScores['serviceSum'] = priorityScores[serviceColumns].sum(axis=1)
+        priorityScores['serviceSum'] = priorityScores.groupby(['id'])['serviceSum'].transform("max")
+
+        serviceColumns.append("serviceSum")
+        priorityScores[serviceColumns] = priorityScores[serviceColumns].apply(lambda row: row / row['serviceSum'], axis=1)
+        priorityScores.drop(columns=['serviceSum'], inplace=True)
+
+    return priorityScores
 
 def calculatePriorityScoreWeighting(priorityScores: pd.DataFrame, weightings: dict[str, float]) -> pd.DataFrame:
     """Calculate the priority score weighting based on the provided weights
