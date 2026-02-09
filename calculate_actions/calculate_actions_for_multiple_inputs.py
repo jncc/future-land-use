@@ -261,35 +261,35 @@ def main(polygonPath: str,
         (startWallTime, startProcessTime) = startTimers()
         logging.info('Initial Priority Score Weighting')
 
-        mergedPriorityScores = calculateInitialPriorityScoreWeighting(mergedPriorityScores)
-        logging.info(mergedPriorityScores, extra={'simple': True})
+        weightedPriorityScores = calculateInitialPriorityScoreWeighting(mergedPriorityScores)
+        logging.info(weightedPriorityScores, extra={'simple': True})
 
         logging.info('---------------------------- Initial Priority Score Weighting Complete ---------------------------- ')
         logging.info(f'Wall Time: {wallTime} seconds')
         logging.info(f'Process Time: {processTime} seconds')
 
-        logging.info('Calculating weighted priority scores')
-        (startWallTime, startProcessTime) = startTimers()
+        # logging.info('Calculating weighted priority scores')
+        # (startWallTime, startProcessTime) = startTimers()
 
-        if (Path(finalWeightedPriorityScorePath).exists()):
-            if overwriteWeightedPriorityScores:
-                logging.warning(f'Output path {finalWeightedPriorityScorePath} already exists, overwriting')
-            else:
-                logging.warning(f'Output path {finalWeightedPriorityScorePath} already exists, exiting')
-                raise FileExistsError(f'Output path {finalWeightedPriorityScorePath} already exists')
+        # if (Path(finalWeightedPriorityScorePath).exists()):
+        #     if overwriteWeightedPriorityScores:
+        #         logging.warning(f'Output path {finalWeightedPriorityScorePath} already exists, overwriting')
+        #     else:
+        #         logging.warning(f'Output path {finalWeightedPriorityScorePath} already exists, exiting')
+        #         raise FileExistsError(f'Output path {finalWeightedPriorityScorePath} already exists')
 
-        with open(weightingsConfig) as f:
-            weightings = json.load(f)
-            if not set(weightings.keys()).issuperset(mergedPriorityScores.keys().to_list()):
-                raise ValueError('Mismatch between priority layers and weightings')
+        # with open(weightingsConfig) as f:
+        #     weightings = json.load(f)
+        #     if not set(weightings.keys()).issuperset(mergedPriorityScores.keys().to_list()):
+        #         raise ValueError('Mismatch between priority layers and weightings')
 
-        weightedPriorityScores = calculatePriorityScoreWeighting(mergedPriorityScores, weightings)
+        # weightedPriorityScores = calculatePriorityScoreWeighting(mergedPriorityScores, weightings)
         weightedPriorityScores.to_csv(finalWeightedPriorityScorePath)
-        logging.info(weightedPriorityScores, extra={'simple': True})
+        # logging.info(weightedPriorityScores, extra={'simple': True})
         
-        logging.info('---------------------------- Priority Score Weighting Complete ---------------------------- ')
-        logging.info(f'Wall Time: {wallTime} seconds')
-        logging.info(f'Process Time: {processTime} seconds')
+        # logging.info('---------------------------- Priority Score Weighting Complete ---------------------------- ')
+        # logging.info(f'Wall Time: {wallTime} seconds')
+        # logging.info(f'Process Time: {processTime} seconds')
 
     logging.info('Calculate action scores using priorities and QEIA')
     (startWallTime, startProcessTime) = startTimers()

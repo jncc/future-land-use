@@ -79,8 +79,8 @@ def calculateInitialPriorityScoreWeighting(priorityScores: pd.DataFrame) -> pd.D
         pd.DataFrame: A DataFrame containing the initial priority score weighting
     """
     data_columns = priorityScores.columns.difference(['id', 'option', 'totalServices'])
-    priorityScores = priorityScores.apply(lambda row: (1 / row['totalServices']) * row[data_columns], axis=1)
     priorityScores['serviceSum'] = priorityScores[data_columns].sum(axis=1)
+    priorityScores['serviceSum'] = priorityScores.groupby(['id'])['serviceSum'].transform("max")
 
     return priorityScores.apply(lambda row: row[data_columns] / row['serviceSum'], axis=1).drop(columns=['serviceSum','totalServices'], errors='ignore')
 
@@ -94,6 +94,8 @@ def calculatePriorityScoreWeighting(priorityScores: pd.DataFrame, weightings: di
     Returns:
         pd.DataFrame: A DataFrame containing the weighted priority scores
     """
+    # This code will need to be updated with the new weighting approach 
+    # (but doesn't make a difference now as we are not weighting services)
     for layer, weight in weightings.items():
         if layer in priorityScores.columns:
             priorityScores[layer] *= weight
