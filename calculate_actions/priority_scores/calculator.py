@@ -79,6 +79,13 @@ def calculateInitialPriorityScoreWeighting(priorityScores: pd.DataFrame) -> pd.D
         pd.DataFrame: A DataFrame containing the initial priority score weighting
     """
     data_columns = priorityScores.columns.difference(['id', 'option', 'totalServices'])
+    priorityScores['serviceSum'] = priorityScores[data_columns].sum(axis=1)
+    # Find the maximum possible service sum per parcel and use that for normalisation per parcel
+    priorityScores['serviceSum'] = priorityScores.groupby(['id'])['serviceSum'].transform("max")
+    priorityScores = priorityScores.apply(lambda row: row[data_columns] / row['serviceSum'], axis=1).drop(columns=['serviceSum','totalServices'], errors='ignore')
+
+    """Below is code for the alternate function with normalisation per service and multiplication
+    by 1/n(ES) - not using this for now
 
     # Normalise so that scores sum to 1 per ecosystem service
     ecosystemServices = list(set([i.split("_")[1] for i in data_columns]))
@@ -96,6 +103,7 @@ def calculateInitialPriorityScoreWeighting(priorityScores: pd.DataFrame) -> pd.D
     # Multiply by 1/n(ES) so that scores sum to 1 per parcel
     # (In the future this will be replaced with the service weighting calculations)
     priorityScores = priorityScores.apply(lambda row: (1 / row['totalServices']) * row[data_columns], axis=1)
+    """
 
     return priorityScores
 
