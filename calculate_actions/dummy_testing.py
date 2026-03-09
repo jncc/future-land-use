@@ -88,3 +88,30 @@ alt_pS_3 = alt_pS_2
 alt_pS_3 = alt_pS_3.apply(lambda row: (1 / row['Active Service Sum']) * row[data_columns], axis=1)
 print("1/n(ES) applied:")
 print(alt_pS_3)
+
+# ALTERNATIVE 4: Using Rory's suggestion of multiplying by (1/n(ES))/n(EiS) per service
+# to adjust scores for services with more indicators
+
+print("ALTERNATIVE 4")
+# zPS/sum(zPS) with parcel weighting fix
+alt_pS_4 = dummy_ps
+alt_pS_4['serviceSum'] = alt_pS_4[data_columns].sum(axis=1)
+alt_pS_4['max_serviceSum'] = alt_pS_4.groupby(['Parcel'])['serviceSum'].transform("max")
+alt_pS_4 = alt_pS_4.apply(lambda row: row[data_columns] / row['max_serviceSum'], axis=1)
+print("Parcel weighting:")
+print(alt_pS_4)
+print("n(ES) = ", len(services))
+
+for i in services:
+    print("Service: ", i)
+    service_columns = list(filter(lambda k: i in k, data_columns))
+    print("Service columns: ", service_columns)
+    print("Number of indicators: ", len(service_columns))
+
+    print("( 1/", len(services), " / ", len(service_columns), ")")
+    multiplier = ((1/len(services)) / len(service_columns))
+    print(multiplier)
+
+    alt_pS_4[service_columns] = alt_pS_4[service_columns].apply(lambda row: multiplier * row)
+
+print(alt_pS_4)

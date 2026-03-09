@@ -105,6 +105,19 @@ def calculateInitialPriorityScoreWeighting(priorityScores: pd.DataFrame) -> pd.D
     priorityScores = priorityScores.apply(lambda row: (1 / row['totalServices']) * row[data_columns], axis=1)
     """
 
+    # Trialling alternative method to incorporate 1/n(ES): multiply by 1/n(ES), then divide
+    # this by number of indicators within each service
+
+    ecosystemServices = list(set([i.split("_")[1] for i in data_columns]))
+
+    for service in ecosystemServices:
+        # Find service columns, i.e. indices for that service
+        serviceColumns = list(filter(lambda k: service in k, data_columns))
+        # Weighting = (1 / total number of ecosystem services) / number of indicators in that service
+        weighting = ((1/len(ecosystemServices)) / len(serviceColumns))
+        # Multiply weighting with priority scores
+        priorityScores[serviceColumns] = priorityScores[serviceColumns].apply(lambda row: weighting * row, axis=1)
+
     return priorityScores
 
 def calculatePriorityScoreWeighting(priorityScores: pd.DataFrame, weightings: dict[str, float]) -> pd.DataFrame:
