@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 dummy_path = "O:/EAT/Ecosystems Analysis/ELMs/Spatial Prioritisation v2.0/Data/MCDA Workflow Data/MCDA Change Tests/dummy_data/Dummy_Data_For_Weightings.csv"
 dummy_ps = pd.read_csv(dummy_path)
@@ -49,6 +50,7 @@ print(alt_pS_out)
 
 # ALTERNATIVE 2: Group the weightings by services (so they sum to 1 within a service
 # area)
+print("ALTERNATIVE 2")
 alt_pS_2 = alt_pS
 # Get unique services present
 services = list(set([i.split("_")[1] for i in data_columns]))
@@ -94,13 +96,26 @@ print(alt_pS_3)
 
 print("ALTERNATIVE 4")
 # zPS/sum(zPS) with parcel weighting fix
+
 alt_pS_4 = dummy_ps
+# Add another column to test df with an inactive service for one of the parcels
+alt_pS_4['Priority_Biod_TestInd'] = [1.0, 1.0, 1.0, float("nan"), float("nan"), float("nan")]
+print("Initial data:")
+print(alt_pS_4)
 alt_pS_4['serviceSum'] = alt_pS_4[data_columns].sum(axis=1)
 alt_pS_4['max_serviceSum'] = alt_pS_4.groupby(['Parcel'])['serviceSum'].transform("max")
-alt_pS_4 = alt_pS_4.apply(lambda row: row[data_columns] / row['max_serviceSum'], axis=1)
+print(alt_pS_4)
+data_columns = alt_pS_4.columns.difference(['Parcel', 'Option', 'Active Service Sum'])
+print("Data columns: ", data_columns)
+alt_pS_4[data_columns] = alt_pS_4[data_columns].apply(lambda row: row[data_columns] / row['max_serviceSum'], axis=1)
+alt_pS_4.drop(columns=['Active Service Sum', 'serviceSum', 'max_serviceSum'], inplace=True)
 print("Parcel weighting:")
 print(alt_pS_4)
 print("n(ES) = ", len(services))
+
+alt_pS_4.groupby(['Parcel'])
+""" print("Grouped:")
+print(alt_pS_4) """
 
 for i in services:
     print("Service: ", i)
