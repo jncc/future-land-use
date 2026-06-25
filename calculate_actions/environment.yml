@@ -13,3 +13,4 @@ dependencies:
   - rasterio=1.5.0
   - rasterstats=0.21.0
   - simplejson=4.1.1
+  - python=3.14.6
