@@ -86,6 +86,7 @@ print(alt_pS_2)
 # The active service sum calculation will need to be ammended to make sure it is
 # summing services, not indicators
 
+print("ALTERNATIVE 3")
 alt_pS_3 = alt_pS_2
 alt_pS_3 = alt_pS_3.apply(lambda row: (1 / row['Active Service Sum']) * row[data_columns], axis=1)
 print("1/n(ES) applied:")
@@ -97,11 +98,13 @@ print(alt_pS_3)
 print("ALTERNATIVE 4")
 # zPS/sum(zPS) with parcel weighting fix
 
-alt_pS_4 = dummy_ps
+alt_pS_4 = alt_pS
+print(alt_pS_4)
 # Add another column to test df with an inactive service for one of the parcels
 alt_pS_4['Priority_Biod_TestInd'] = [1.0, 1.0, 1.0, float("nan"), float("nan"), float("nan")]
 print("Initial data:")
 print(alt_pS_4)
+
 alt_pS_4['serviceSum'] = alt_pS_4[data_columns].sum(axis=1)
 alt_pS_4['max_serviceSum'] = alt_pS_4.groupby(['Parcel'])['serviceSum'].transform("max")
 print(alt_pS_4)
