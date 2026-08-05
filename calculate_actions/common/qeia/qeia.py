@@ -87,7 +87,7 @@ class QEIAMatrix:
             QEIAMatrix: A new QEIAMatrix object filtered by the input 
             eligibility list
         """
-        filteredMatrix: dict[str, dict[str, int]] = {}
+        filteredMatrix: dict[str, dict[str, np.floating]] = {}
         for option in self.options:
             if option in eligible:
                 filteredMatrix[option] = self.options[option].getPriorityModifiers()
