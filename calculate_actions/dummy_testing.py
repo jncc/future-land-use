@@ -167,21 +167,106 @@ def createDataFrame(self) -> pd.DataFrame:
 
     return pd.DataFrame.from_dict(row)
 
+
 # Convert the dummy QEIA to a dataframe and transpose it to the right orientation
 dummy_qeia = dummy_qeia.createDataFrame().transpose()
 pd.DataFrame(dummy_qeia)
 print("Base dummy QEIA:")
 print(dummy_qeia)
 
-## Create alternative dummy QEIAs for testing ------------------------------
+
+def templateToQEIAMultiplier(template: pd.DataFrame, qeia: QEIAMatrix) -> pd.DataFrame:
+    qeia.index.name = 'option'
+    qeia.drop(columns=qeia.columns.difference(template.columns), inplace=True)
+
+    # 0 out the template - had to adjust code as wasn't working
+    template = template.copy(deep=True)
+    template.iloc[:, 2:] = 0
+
+    for column in qeia.columns:
+        for option in qeia.index:
+            if option in template['Option'].unique():
+                # Had to adjust this code as pd.IndexSlice was returning an error
+                template.loc[template['Option'] == option, column] = qeia.loc[option, column]
+
+    return template
+
+test_mul = templateToQEIAMultiplier(template=dummy_ps, qeia=dummy_qeia)
+test_mul.to_clipboard()
+
+
+def calculateMCDAForPriorityScoresWithEligibility(priorityScores: pd.DataFrame, qeia: QEIAMatrix) -> pd.DataFrame:
+    """Calcualate the MCDA outputs for a supplied set of priority scores, QEIA matrix and eligibility table
+
+    Args:
+        priorityScores (pd.DataFrame): Dataframe containing the priority scores for each input polygon ID
+        qeia (QEIAMatrix): The QEIA matrix to use for this MCDA calculation
+
+    Returns:
+        pd.DataFrame: A finalised MCDA table with total/rank for each input polygon ID
+    """
+    
+    qeiaMultiplier = templateToQEIAMultiplier(priorityScores, qeia)
+    mcda = priorityScores.mul(qeiaMultiplier)
+    mcda['total'] = mcda.sum(axis=1)
+    mcda['rank'] = mcda.groupby(level=0)['total'].rank(method='first', ascending=False)
+
+    return mcda.sort_values(['id', 'rank'])
+
+
+# test_mcda = calculateMCDAForPriorityScoresWithEligibility(priorityScores=dummy_ps, qeia=dummy_qeia)
+test_mcda = dummy_ps
+test_mcda.iloc[:, 2:] = dummy_ps.iloc[:, 2:] * test_mul.iloc[:, 2:]
+print("Test MCDA:")
+print(test_mcda)
+test_mcda.to_clipboard()
+
+
+
+# ## Create alternative dummy QEIAs for testing ------------------------------
 
 # Rescaled -1 to 1 - just divide by 4
-qeia_downweighted = dummy_qeia / 4
-print("Downweighted QEIA - divided by 4:")
-print(qeia_downweighted)
+# qeia_downweighted = dummy_qeia / 4
+# print("Downweighted QEIA - divided by 4:")
+# print(qeia_downweighted)
 
-# Rescale without any strength - only 3 possible values: -1, 0, 1
-print("No strength QEIA - just values of -1, 0, 1")
-qeia_nostrength = np.sign(dummy_qeia)
-print(qeia_nostrength)
-#qeia_nostrength.to_clipboard()
+# # Rescale without any strength - only 3 possible values: -1, 0, 1
+# print("No strength QEIA - just values of -1, 0, 1")
+# qeia_nostrength = np.sign(dummy_qeia)
+# print(qeia_nostrength)
+# qeia_nostrength.to_clipboard()
+
+# ## Run dummy tests with QEIAs --------------------------------------------------
+
+# dummy_mcda_0 = calculateMCDAForPriorityScoresWithEligibility(dummy_ps, dummy_qeia)
+# print(dummy_mcda_0)
+
+# def templateToQEIAMultiplier(template: pd.DataFrame, qeia: QEIAMatrix) -> pd.DataFrame:
+#     """Creates a multiplier dataframe from an eligibility template and a QEIA matrix, to allow us to
+#     multiply the eligibility template by the QEIA matrix
+
+#     Args:
+#         eligibilityTemplate (pd.DataFrame): A template dataframe with a row for each parcel ID/ eligible 
+#         option pair (generated from the eligibilityTableToMCDAEligibilityTemplate function)
+#         qeia (QEIAMatrix): The QEIA matrix to use for this MCDA calculation
+
+#     Returns:
+#         pd.DataFrame: A utility dataframe containing the QEIA multipliers for each parcel ID/option pair
+#     """
+#     qeiaMatrix = qeia.createDataFrame().transpose()
+#     qeiaMatrix.index.name = 'option'
+#     qeiaMatrix.drop(columns=qeiaMatrix.columns.difference(template.columns), inplace=True)
+
+#     # 0 out the template
+#     template = template.copy(deep=True)
+#     template.loc[:, template.columns] = 0
+
+#     for column in qeiaMatrix.columns:
+#         for option in qeiaMatrix.index:
+#             if option in template.index.get_level_values('option'):
+#                 template.loc[pd.IndexSlice[:, option], column] = qeiaMatrix.loc[option, column]
+
+#     return template
+
+# dummy_qeia_mul = templateToQEIAMultiplier(dummy_ps, dummy_qeia)
+# print(dummy_qeia_mul)
