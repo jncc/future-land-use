@@ -2,6 +2,7 @@ from common.layers import RasterLayer, VectorLayer
 from shapely import Polygon
 from pathlib import Path
 import numpy as np
+import geopandas as gpd
 from rasterstats import zonal_stats
 
 class PriorityLayer:
@@ -67,6 +68,54 @@ class PriorityVectorLayer(VectorLayer, PriorityLayer):
         touchingPolygons = self.dataTable.touches(polygon)
         intersectsNotTouches = self.dataTable[intersectingPolygons & ~touchingPolygons]
         return intersectsNotTouches[self.columnName].max()
+
+    def extractClassPercentages(self, polygon: Polygon) -> dict:
+
+        """Calculate the percentage of the input polygon occupied by each score or class in the specified attribute column.
+        
+        Args:
+            polygon (Polygon): A polygon to intersect this layer with
+            columnName (str, optional): The score column to use from the vector layer. Defaults to 'Priority_normalised'.
+        
+        Returns: 
+            dict: {class_name: percent_area}
+        """
+
+        if columnName is None:
+            columnName = self.columnName
+
+        intersectingPolygons = self.dataTable.intersects(polygon)
+        touchingPolygons = self.dataTable.touches(polygon)
+        intersectsNotTouches = self.dataTable[intersectingPolygons & ~touchingPolygons].copy()
+
+        if intersectsNotTouches.empty:
+            return {}
+
+        # Calculate overlap geometry
+        intersectsNotTouches["overlap_geom"] = (
+            intersectsNotTouches.geometry.intersection(polygon)
+        )
+
+        # Calculate overlap area
+        intersectsNotTouches["overlap_area"] = (
+            intersectsNotTouches["overlap_geom"].area
+        )
+
+        polygon_area = polygon.area
+
+        # Sum overlap area by class
+        class_areas = (
+            intersectsNotTouches
+            .groupby(columnName)["overlap_area"]
+            .sum()
+        )
+
+        # Convert to percentages
+        class_percentages = (
+            class_areas / polygon_area * 100
+        )
+
+        return class_percentages.to_dict()
 
 class PriorityRasterLayer(RasterLayer, PriorityLayer):
     """Class for Raster based Priority Layers, extends the RasterLayer and PriorityLayer

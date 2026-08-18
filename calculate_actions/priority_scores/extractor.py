@@ -76,6 +76,42 @@ class Calculator:
                 logging.info(f'--- Process Time: {processTime} milliseconds')
 
         return df
+
+    def extractPercentagesForPolygon(self, polygon: Polygon, timing: bool = True) -> list:
+
+        """Calculate the priorty score percentages for a single polygon against a set of priority layers
+
+        Args:
+            polygon (Polygon): Input Polygon to intersect with priority layers
+
+        Returns:
+            list: A long format list with each parcel, layer, class and percentage for overlapping classes with the polygon
+        """
+        df = []
+            
+        for layer in self.priorityLayers:
+
+            if timing:
+                (startWallTime, startProcessTime) = startTimers()
+
+            classPercentages = (self.priorityLayers[layer].extractClassPercentages(polygon))
+
+            for classValue, percentage in classPercentages.items():
+
+                df.append({
+                    "layer": self.priorityLayers[layer].name,
+                    "class": classValue,
+                    "percent": percentage
+                })
+
+            if timing:
+                (wallTime, processTime) = endTimers(startWallTime, startProcessTime)
+
+                logging.info(f'--- Processed priority layer: {self.priorityLayers[layer].name}')
+                logging.info(f'--- Wall Time: {wallTime} milliseconds')
+                logging.info(f'--- Process Time: {processTime} milliseconds')
+
+        return df
     
 def extractPriorityScoresForInputPolygon(polygonId: str, polygon: Polygon, prioirityLayers: dict[str, PriorityLayer]) -> pd.DataFrame:
     """Calculate the priority scores for the input polygon, using the provided priority layers
@@ -102,7 +138,7 @@ def extractPriorityScoresForInputPolygons(polygonSource: Path, prioirityLayers: 
     Args:
         polygonSource (Path): A path to a WKT file containing the input polygon
         prioirityLayers (dict[str, PriorityLayer]): A dictionary containing the priority layers to use in the calculation
-
+        polygonIdColumn (str): A string representing the name of the oclumn containing the polygon ID
     Returns:
         pd.DataFrame: A DataFrame containing the priority scores for the input polygon
     """
@@ -117,4 +153,41 @@ def extractPriorityScoresForInputPolygons(polygonSource: Path, prioirityLayers: 
     for parcel in inputParcels.iterrows():
         inputPriorityScores.loc[parcel[1][polygonIdColumn]] = priorityCalculator.extractPriorityScoreForPolygonAsArray(parcel[1]['geometry'], False)        
 
-    return inputPriorityScores    
+    return inputPriorityScores
+
+def extractPercentagesForInputPolygons(polygonSource: Path, priorityLayers: dict[str, PriorityLayer], polygonIdColumn: str) -> pd.DataFrame:
+    """Calculate the priority percentages for the input polygon, using the provided priority layers
+    
+        Args:
+            polygonSource (Path): A path to a WKT file containing the input polygon
+            prioirityLayers (dict[str, PriorityLayer]): A dictionary containing the priority layers to use in the calculation
+            polygonIdColumn (str): A string representing the name of the oclumn containing the polygon ID
+    
+        Returns:
+            pd.DataFrame: A DataFrame containing the priority scores for the input polygon
+        """
+
+
+    if polygonSource.suffix == '.parquet':
+        inputParcels = gpd.read_parquet(polygonSource)
+    else:
+        inputParcels = gpd.read_file(polygonSource)
+
+    priorityCalculator = Calculator(priorityLayers)
+
+    rows = []
+
+    for parcel in inputParcels.iterrows():
+        parcelResults = (priorityCalculator.extractPercentagesForPolygon(parcel[1]["geometry"], False))
+
+        for result in parcelResults:
+            rows.append({
+                "id": parcel[1][polygonIdColumn],
+                "layer": result["layer"],
+                "class": result["class"],
+                "percent": result["percent"]
+                })
+
+    inputPercentages = pd.DataFrame(rows)
+
+    return inputPercentages  

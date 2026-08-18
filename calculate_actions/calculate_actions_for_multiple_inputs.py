@@ -7,7 +7,7 @@ from common.layers import EligibilityLayer, PriorityLayer, processEligibilityLay
 from common.timing import startTimers, endTimers
 from common.qeia import QEIAMatrix
 from datetime import datetime
-from priority_scores import extractPriorityScoresForInputPolygons, calculatePriorityScoreWeighting, calculateActiveServices, calculateInitialPriorityScoreWeighting, groupColumnAggregation, mergeEligibilityOptions
+from priority_scores import extractPriorityScoresForInputPolygons, extractPercentagesForInputPolygons, calculatePriorityScoreWeighting, calculateActiveServices, calculateInitialPriorityScoreWeighting, groupColumnAggregation, mergeEligibilityOptions
 from eligibility import calculateOptionEligibilityForInputPolygons
 from mcda import calculateMCDAForPriorityScoresWithEligibility
 from pathlib import Path
@@ -26,6 +26,7 @@ def main(polygonPath: str,
          weightingsConfig: str,
          qeiaMatrix: str,
          usePrecalculatedPriorityScores: bool,
+         calculatepercentages: bool,
          priorityScoreFilename: str,
          overwritePriorityScores: bool,
          overridePriorityScorePath: str,
@@ -58,6 +59,7 @@ def main(polygonPath: str,
         weightingsConfig (str): Path to a JSON file containing a configuration object for priority weightings
         qeiaMatrix (str): Path to a JSON file containing a configuration object for a QEIA matrix to process against
         usePrecalculatedPriorityScores (bool): If true use the precalculated priority scores CSV file in the output path directory
+        calculatepercentages (bool): If true, percentage coverage values will be extracted per class instead of maximum priority score touching parcel
         priorityScoreFilename (str): Filename for priority scores CSV file, this file will be written to / read from the output path directory
         overwritePriorityScores (bool): Overwrite priority scores file if it already exists
         overridePriorityScorePath (str): Override full path for priority scores file as CSV, None if not used
@@ -168,8 +170,13 @@ def main(polygonPath: str,
             logging.info(f'Found {len(priorityLayers)} priority layers in the config file')
             
             logging.info('Calculate priority scores')
-            priorityScores = extractPriorityScoresForInputPolygons(Path(polygonPath), priorityLayers, polygonIdColumn)
-            priorityScores.to_csv(finalPriorityScorePath, index=True, index_label='id')
+            if calculatepercentages:
+                priorityPercentages = extractPercentagesForInputPolygons(Path(polygonPath), priorityLayers, polygonIdColumn)
+                priorityPercentages.to_csv(finalPriorityScorePath, index=True, index_label='id')
+
+            else:
+                priorityScores = extractPriorityScoresForInputPolygons(Path(polygonPath), priorityLayers, polygonIdColumn)
+                priorityScores.to_csv(finalPriorityScorePath, index=True, index_label='id')
         
         (wallTime, processTime) = endTimers(startWallTime, startProcessTime, 1)
         logging.info('---------------------------- Priority Score Extraction Complete ---------------------------- ')
