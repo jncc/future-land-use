@@ -81,9 +81,6 @@ class PriorityVectorLayer(VectorLayer, PriorityLayer):
             dict: {class_name: percent_area}
         """
 
-        if columnName is None:
-            columnName = self.columnName
-
         intersectingPolygons = self.dataTable.intersects(polygon)
         touchingPolygons = self.dataTable.touches(polygon)
         intersectsNotTouches = self.dataTable[intersectingPolygons & ~touchingPolygons].copy()
@@ -106,7 +103,7 @@ class PriorityVectorLayer(VectorLayer, PriorityLayer):
         # Sum overlap area by class
         class_areas = (
             intersectsNotTouches
-            .groupby(columnName)["overlap_area"]
+            .groupby(self.columnName)["overlap_area"]
             .sum()
         )
 
