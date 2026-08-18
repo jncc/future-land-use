@@ -331,6 +331,7 @@ if __name__ == '__main__':
     parser.add_argument('-w', '--weightings-config', type=str, required=False, default='weightings.json', help='JSON file containing priority weightings')
     parser.add_argument('-q', '--qeia-matrix', type=str, required=False, help='Raw QEIA impact score matrix file')
     parser.add_argument('--use-precalculated-priority-scores', required=False, help='Use precalculated priority scores table as a CSV', default=False, action=argparse.BooleanOptionalAction)
+    parser.add_argument('--calculatepercentages', required=False, help='If true, percentage coverage values will be extracted per class instead of maximum priority score touching parcel', default=False, action=argparse.BooleanOptionalAction)
     parser.add_argument('--priority-score-filename', type=str, required=False, help='Filename for priority scores table as CSV for this run', default='priority_scores.csv')
     parser.add_argument('--overwrite-priority-scores', required=False, help='Overwrite existing prioirity scores table if it exists', default=False, action=argparse.BooleanOptionalAction)
     parser.add_argument('--override-priority-score-path', type=str, required=False, help='Full path to an optional file for priority scores as CSV', default=None)
@@ -362,6 +363,7 @@ if __name__ == '__main__':
         args.weightings_config,
         args.qeia_matrix, 
         args.use_precalculated_priority_scores, 
+        args.calculatepercentages,
         args.priority_score_filename, 
         args.overwrite_priority_scores, 
         args.override_priority_score_path,
