@@ -144,7 +144,13 @@ print("TESTING: QEIA DOWNSCALING ===============================================
 
 dummy_path = "O:/EAT/Ecosystems Analysis/ELMs/Spatial Prioritisation v2.0/Data/MCDA Workflow Data/MCDA Change Tests/dummy_data/"
 dummy_ps = pd.read_csv(dummy_path + "Dummy_Data_2.csv")
-#dummy_ps.iloc[:, 2:] = dummy_ps.iloc[:, 2:].astype(np.float64) # Convert all numeric column values to float
+
+# Convert all int column values to float
+cols = list(dummy_ps.columns)
+cols.remove('Option')
+for col in cols:
+    dummy_ps[col] = dummy_ps[col].astype(float)
+
 print("Dummy priority scores:")
 print(dummy_ps)
 #dummy_ps.to_clipboard()
@@ -183,7 +189,6 @@ def templateToQEIAMultiplier(template: pd.DataFrame, qeia: QEIAMatrix) -> pd.Dat
     # 0 out the template - had to adjust code as wasn't working
     template = template.copy(deep=True)
     template.iloc[:, 2:] = 0.0
-    # template.iloc[:, 2] = template.iloc[:, 2].apply(pd.to_numeric, errors='coerce', downcast='float')
 
     for column in qeia.columns:
         for option in qeia.index:
@@ -211,17 +216,9 @@ def calculateMCDAForPriorityScoresWithEligibility(priorityScores: pd.DataFrame, 
     mcda = priorityScores.copy(deep=True)
     mcda.iloc[:, 2:] = priorityScores.iloc[:, 2:].mul(qeiaMultiplier.iloc[:, 2:])
     mcda['total'] = mcda.iloc[:, 2:].sum(axis=1)
-    #mcda['rank'] = mcda.groupby(level=0)['total'].rank(method='first', ascending=False)
     mcda['rank'] = mcda.groupby('Parcel')['total'].rank(method='first', ascending=False)
 
     return mcda.sort_values(['Parcel', 'rank'])
-
-
-test_mcda = calculateMCDAForPriorityScoresWithEligibility(priorityScores=dummy_ps, qeia=dummy_qeia)
-print("Test MCDA:")
-print(test_mcda)
-#test_mcda.to_clipboard()
-
 
 
 ## Create alternative dummy QEIAs for testing ------------------------------
@@ -230,6 +227,7 @@ print(test_mcda)
 qeia_downweighted = dummy_qeia / 4
 print("Downweighted QEIA - divided by 4:")
 print(qeia_downweighted)
+# qeia_downweighted.to_clipboard()
 
 # Rescale without any strength - only 3 possible values: -1, 0, 1
 qeia_nostrength = np.sign(dummy_qeia)
@@ -239,40 +237,18 @@ print(qeia_nostrength)
 
 # ## Run dummy tests with QEIAs --------------------------------------------------
 
-# dummy_mcda_0 = calculateMCDAForPriorityScoresWithEligibility(priorityScores=dummy_ps, qeia=dummy_qeia)
-# print("DUMMY MCDA - 0: -----------------------------------------------")
-# print(dummy_mcda_0)
-# # dummy_mcda_0.to_clipboard()
+dummy_mcda_0 = calculateMCDAForPriorityScoresWithEligibility(priorityScores=dummy_ps, qeia=dummy_qeia)
+print("DUMMY MCDA - 0: -----------------------------------------------")
+print(dummy_mcda_0)
+# dummy_mcda_0.to_clipboard()
 
-# print(dummy_qeia.dtypes)
-# print(qeia_downweighted.dtypes)
-# print(qeia_nostrength.dtypes)
-# print(dummy_ps.dtypes)
-# print(dummy_ps.iloc[:, 2:])
-# dummy_ps.iloc[:, 2:] = dummy_ps.iloc[:, 2:].astype("float")
-# print(dummy_ps.dtypes)
-# dummy_ps.to_clipboard()
-# print(dummy_ps.dtypes)
-# qeia_downweighted.to_clipboard()
-# test_mul = templateToQEIAMultiplier(template=dummy_ps, qeia=qeia_downweighted)
-# test_mul.to_clipboard()
-# # dummy_mcda_downweighted = calculateMCDAForPriorityScoresWithEligibility(priorityScores=dummy_ps, qeia=qeia_downweighted)
-# # print("DUMMY MCDA - DOWNWEIGHTED: -------------------------------------")
-# # print(dummy_mcda_downweighted)
-# # # dummy_mcda_downweighted.to_clipboard()
+dummy_mcda_downweighted = calculateMCDAForPriorityScoresWithEligibility(priorityScores=dummy_ps, qeia=qeia_downweighted)
+print("DUMMY MCDA - DOWNWEIGHTED: -------------------------------------")
+print(dummy_mcda_downweighted)
+# dummy_mcda_downweighted.to_clipboard()
 
 
-# dummy_mcda_nostrength = calculateMCDAForPriorityScoresWithEligibility(priorityScores=dummy_ps, qeia=qeia_nostrength)
-# print("DUMMY MCDA - NO STRENGTH: --------------------------------------")
-# print(dummy_mcda_nostrength)
+dummy_mcda_nostrength = calculateMCDAForPriorityScoresWithEligibility(priorityScores=dummy_ps, qeia=qeia_nostrength)
+print("DUMMY MCDA - NO STRENGTH: --------------------------------------")
+print(dummy_mcda_nostrength)
 # dummy_mcda_nostrength.to_clipboard()
-
-test_temp = dummy_ps.copy(deep=True)
-test_temp.iloc[:, 2:] = 0.0000
-
-# test_temp.iloc[:, 2:] = test_temp.iloc[:, 2:].astype(float)
-# print(test_temp.dtypes)
-# test_temp.iloc[:, 2] = test_temp.iloc[:, 2].apply(pd.to_numeric, downcast='float')
-# test_temp.iloc[:, 2] = float(test_temp.iloc[:, 2])
-
-print(test_temp["Priority_AirP_ReducedNH3"])
