@@ -240,15 +240,15 @@ print(qeia_nostrength)
 dummy_mcda_0 = calculateMCDAForPriorityScoresWithEligibility(priorityScores=dummy_ps, qeia=dummy_qeia)
 print("DUMMY MCDA - 0: -----------------------------------------------")
 print(dummy_mcda_0)
-# dummy_mcda_0.to_clipboard()
+# dummy_mcda_0.to_csv(dummy_path + "Results/Dummy_MCDA_0.csv")
 
 dummy_mcda_downweighted = calculateMCDAForPriorityScoresWithEligibility(priorityScores=dummy_ps, qeia=qeia_downweighted)
 print("DUMMY MCDA - DOWNWEIGHTED: -------------------------------------")
 print(dummy_mcda_downweighted)
-# dummy_mcda_downweighted.to_clipboard()
+# dummy_mcda_downweighted.to_csv(dummy_path + "Results/Dummy_MCDA_Downweighted.csv")
 
 
 dummy_mcda_nostrength = calculateMCDAForPriorityScoresWithEligibility(priorityScores=dummy_ps, qeia=qeia_nostrength)
 print("DUMMY MCDA - NO STRENGTH: --------------------------------------")
 print(dummy_mcda_nostrength)
-# dummy_mcda_nostrength.to_clipboard()
+# dummy_mcda_nostrength.to_csv(dummy_path + "Results/Dummy_MCDA_NoStrength.csv")
