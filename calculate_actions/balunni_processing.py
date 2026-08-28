@@ -3,7 +3,7 @@
 import geopandas as gpd
 import shapely as shp
 from pathlib import Path
-from balunni_functions import processPeatData, stitchXYZTiles
+from balunni_functions import processPeatData, stitchXYZTiles, parcelBatchCreation
 
 # Define inputs folder
 inputpath = "O:\\EAT\\Ecosystems Analysis\\BALLUNI\\Data\\"
@@ -16,7 +16,7 @@ bgs_peatland = gpd.read_file(Path(inputpath) / "ni_10k_superficial\\ni_10k_super
 peatland_survey = gpd.read_file(Path(inputpath) / "peatland_survey\\peatland_survey.shp")
 afbi_peatland = gpd.read_file(Path(inputpath) / "AFBI_Soil_Series_Map_of_Northern_Ireland\\AFBI_Soil_Series_Map_of_Northern_Ireland.shp")
 efs_peatland = gpd.read_file(Path(inputpath) / "JNCC Priority Habitats April2026 v2\\JNCC_PriorityHabs_EFS.gpkg", layer="NIEA_Priority_Peatland_Tranche10_V1_1")
-lpis_fields = gpd.read_file()
+lpis_fields = gpd.read_file(Path(inputpath) / "LPIS_Fields\\LPIS_Fields.gpkg", layer="Fields_2024")
 
 # Process peatland datasets for extraction step
 processPeatData(jhi_peatland, 29902, "Class", outputpath, "JHI_Peatland_Processed.gpkg")
@@ -27,4 +27,7 @@ processPeatData(efs_peatland, 29902, "CLASS", outputpath, "EFS_Peatland_Processe
 
 # Stitch together 10m DTM
 stitchXYZTiles(Path(dtm_path), Path(dtm_path) / "OSNI_10m_DTM.tif")
+
+# Batch up land parcels into smaller chunks for processing
+parcelBatchCreation(lpis_fields, 50000, "ID", 29902, outputpath)
 

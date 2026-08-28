@@ -137,8 +137,8 @@ def stitchXYZTiles(input_folder: Path, output_raster: Path, crs: int | str, res:
         raster[rows, cols] = df["z"].values
 
     transform = from_origin(
-        xmin - resolution / 2,
-        ymax + resolution / 2,
+        xmin,
+        ymax,
         resolution,
         resolution
     )
