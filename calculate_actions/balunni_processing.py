@@ -2,8 +2,9 @@
 
 import geopandas as gpd
 import shapely as shp
+import pandas as pd
 from pathlib import Path
-from balunni_functions import processPeatData, stitchXYZTiles, parcelBatchCreation
+from balunni_functions import processPeatData, check_xyz_coordinate_structure, stitchXYZTiles, parcelBatchCreation
 
 # Define inputs folder
 inputpath = "O:\\EAT\\Ecosystems Analysis\\BALLUNI\\Data\\"
@@ -20,13 +21,17 @@ lpis_fields = gpd.read_file(Path(inputpath) / "LPIS_Fields\\LPIS_Fields.gpkg", l
 
 # Process peatland datasets for extraction step
 processPeatData(jhi_peatland, 29902, "Class", outputpath, "JHI_Peatland_Processed.gpkg")
-processPeatData(bgs_peatland, 29902, "Class", outputpath, "BGS_Peatland_Processed.gpkg")
-processPeatData(peatland_survey, 29902, "Class", outputpath, "Peatland_Survey_Processed.gpkg")
-processPeatData(jhi_peatland, 29902, "Class", outputpath, "AFBI_Peatland_Processed.gpkg")
+processPeatData(bgs_peatland, 29902, "LEX", outputpath, "BGS_Peatland_Processed.gpkg")
+processPeatData(peatland_survey, 29902, "CLASS", outputpath, "Peatland_Survey_Processed.gpkg")
+processPeatData(jhi_peatland, 29902, "Series", outputpath, "AFBI_Peatland_Processed.gpkg")
 processPeatData(efs_peatland, 29902, "CLASS", outputpath, "EFS_Peatland_Processed.gpkg")
 
 # Stitch together 10m DTM
-stitchXYZTiles(Path(dtm_path), Path(dtm_path) / "OSNI_10m_DTM.tif")
+dtm_sheets_checked = check_xyz_coordinate_structure(Path(dtm_path), 10, 5)
+stitchXYZTiles(Path(dtm_path), Path(dtm_path) / "OSNI_10m_DTM.tif", 29902, 10)
+
+with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
+    print(dtm_sheets_checked)
 
 # Batch up land parcels into smaller chunks for processing
 parcelBatchCreation(lpis_fields, 50000, "ID", 29902, outputpath)

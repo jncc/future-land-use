@@ -43,7 +43,11 @@ def processPeatData(dataset: gpd.GeoDataFrame, targetcrs: int, classcolumn: str,
 
     # Trim down dataset to essential columnns
     if classcolumn not in dataset.columns:  
-        raise ValueError(f"Column '{classcolumn}' not found in dataset")
+        raise ValueError(f"Column '{classcolumn}' not found in dataset")   
+     
+    if classcolumn != "Class":
+        dataset = dataset.rename(columns={classcolumn: "Class"})
+        print('Changed class column name to Class')
     
     dataset = dataset[[classcolumn, "geometry"]]
 
@@ -223,9 +227,81 @@ def parcelBatchCreation(input_parcels: gpd.GeoDataFrame, chunksize: int, id_colu
         batch.to_file(fullpath, driver="GPKG")
 
         written_files.append(fullpath)
-    print(
-    f"Wrote batch {batch_number} "
-    f"({len(batch)} parcels) to {fullpath}"
-    )
+
+        print(
+        f"Wrote batch {batch_number} "
+        f"({len(batch)} parcels) to {fullpath}"
+        )
 
     return written_files
+
+def check_xyz_coordinate_structure(
+    input_folder,
+    resolution=10,
+    expected_remainder=5):
+
+    """
+    Check XYZ files have coordinates aligned to the expected grid.
+
+    For a 10 m grid with cell centres:
+        238475 % 10 = 5
+        418405 % 10 = 5
+
+    Parameters
+    ----------
+    input_folder : str or Path
+    resolution : int or float
+    expected_remainder : int or float
+
+    Returns
+    -------
+    pandas.DataFrame
+    """
+
+    files = list(Path(input_folder).glob("*.txt"))
+
+    results = []
+
+    for file in files:
+
+        try:
+            df = pd.read_csv(
+                file,
+                sep=r"\s+",
+                header=None,
+                names=["x", "y", "z"]
+            )
+
+            x_remainder = (df["x"] % resolution).round(6)
+            y_remainder = (df["y"] % resolution).round(6)
+
+            bad_x = (x_remainder != expected_remainder).sum()
+            bad_y = (y_remainder != expected_remainder).sum()
+
+            results.append({
+                "file": file.name,
+                "n_rows": len(df),
+                "bad_x": bad_x,
+                "bad_y": bad_y,
+                "passed": (bad_x == 0) and (bad_y == 0)
+            })
+
+        except Exception as e:
+
+            results.append({
+                "file": file.name,
+                "n_rows": None,
+                "bad_x": None,
+                "bad_y": None,
+                "passed": False,
+                "error": str(e)
+            })
+
+    results = pd.DataFrame(results)
+
+    print(
+        f"{results['passed'].sum()} of "
+        f"{len(results)} files passed"
+    )
+
+    return results
