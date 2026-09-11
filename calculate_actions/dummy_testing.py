@@ -3,7 +3,7 @@ import numpy as np
 import json
 from common.qeia import QEIAMatrix
 
-## PART 1: ORIGINAL WEIGHTINGS TESTING ################################################################################################################################
+# PART 1: ORIGINAL WEIGHTINGS TESTING ################################################################################################################################
 
 # dummy_path = "O:/EAT/Ecosystems Analysis/ELMs/Spatial Prioritisation v2.0/Data/MCDA Workflow Data/MCDA Change Tests/dummy_data/Dummy_Data_For_Weightings.csv"
 # dummy_ps = pd.read_csv(dummy_path)
@@ -156,109 +156,110 @@ print(dummy_ps)
 #dummy_ps.to_clipboard()
 
 # Apply new priority score weighting approach - normalising by max service sum:
+data_columns = dummy_ps.columns.difference(['Parcel', 'Option'])
+print(data_columns)
 dummy_ps['serviceSum'] = dummy_ps[data_columns].sum(axis=1)
 dummy_ps['max_serviceSum'] = dummy_ps.groupby(['Parcel'])['serviceSum'].transform("max")
-print("Max service sum:")
+weighting_columns = dummy_ps.columns.difference(['Parcel', 'Option', 'serviceSum'])
+dummy_ps[weighting_columns] = dummy_ps[weighting_columns].apply(lambda row: row / row['max_serviceSum'], axis=1)
+dummy_ps.drop(columns=['serviceSum', 'max_serviceSum'], inplace=True)
+print("Weighted by max service sum:")
 print(dummy_ps)
+dummy_ps.to_clipboard()
 
-# alt_pS_out = alt_pS.apply(lambda row: row[data_columns] / row['max_serviceSum'], axis=1)
-# print("Divide by max service sum:")
-# print(alt_pS_out)
+qeia_path = dummy_path + "dummy_qeia.json"
+with open(qeia_path, 'r') as f:
+    raw_qeia = json.load(f)
+    dummy_qeia = QEIAMatrix(raw_qeia)
 
-# qeia_path = dummy_path + "dummy_qeia.json"
-# with open(qeia_path, 'r') as f:
-#     raw_qeia = json.load(f)
-#     dummy_qeia = QEIAMatrix(raw_qeia)
+# Define createDataFrame function - for some reason this doesn't import with QEIAMatrix?
+def createDataFrame(self) -> pd.DataFrame:
+    """Returns a Pandas dataframe representation of this QEIAMatrix
 
-# # Define createDataFrame function - for some reason this doesn't import with QEIAMatrix?
-# def createDataFrame(self) -> pd.DataFrame:
-#     """Returns a Pandas dataframe representation of this QEIAMatrix
-
-#     Returns:
-#         pd.DataFrame: A dataframe representation of this QEIAMatrix object
-#     """
-#     row = {}
+    Returns:
+        pd.DataFrame: A dataframe representation of this QEIAMatrix object
+    """
+    row = {}
     
-#     for option in self.options:
-#         row[option] = self.options[option].getPriorityModifiers()
+    for option in self.options:
+        row[option] = self.options[option].getPriorityModifiers()
 
-#     return pd.DataFrame.from_dict(row)
-
-
-# # Convert the dummy QEIA to a dataframe and transpose it to the right orientation
-# dummy_qeia = dummy_qeia.createDataFrame().transpose()
-# pd.DataFrame(dummy_qeia)
-# print("Base dummy QEIA:")
-# print(dummy_qeia)
+    return pd.DataFrame.from_dict(row)
 
 
-# def templateToQEIAMultiplier(template: pd.DataFrame, qeia: QEIAMatrix) -> pd.DataFrame:
-#     qeia.index.name = 'option'
-#     qeia.drop(columns=qeia.columns.difference(template.columns), inplace=True)
-
-#     # 0 out the template - had to adjust code as wasn't working
-#     template = template.copy(deep=True)
-#     template.iloc[:, 2:] = 0.0
-
-#     for column in qeia.columns:
-#         for option in qeia.index:
-#             if option in template['Option'].unique():
-#                 # Had to adjust this code as pd.IndexSlice was returning an error
-#                 template.loc[template['Option'] == option, column] = qeia.loc[option, column]
-
-#     return template
+# Convert the dummy QEIA to a dataframe and transpose it to the right orientation
+dummy_qeia = dummy_qeia.createDataFrame().transpose()
+pd.DataFrame(dummy_qeia)
+print("Base dummy QEIA:")
+print(dummy_qeia)
 
 
-# def calculateMCDAForPriorityScoresWithEligibility(priorityScores: pd.DataFrame, qeia: QEIAMatrix) -> pd.DataFrame:
-#     """Calcualate the MCDA outputs for a supplied set of priority scores, QEIA matrix and eligibility table
+def templateToQEIAMultiplier(template: pd.DataFrame, qeia: QEIAMatrix) -> pd.DataFrame:
+    qeia.index.name = 'option'
+    qeia.drop(columns=qeia.columns.difference(template.columns), inplace=True)
 
-#     Args:
-#         priorityScores (pd.DataFrame): Dataframe containing the priority scores for each input polygon ID
-#         qeia (QEIAMatrix): The QEIA matrix to use for this MCDA calculation
+    # 0 out the template - had to adjust code as wasn't working
+    template = template.copy(deep=True)
+    template.iloc[:, 2:] = 0.0
 
-#     Returns:
-#         pd.DataFrame: A finalised MCDA table with total/rank for each input polygon ID
-#     """
+    for column in qeia.columns:
+        for option in qeia.index:
+            if option in template['Option'].unique():
+                # Had to adjust this code as pd.IndexSlice was returning an error
+                template.loc[template['Option'] == option, column] = qeia.loc[option, column]
+
+    return template
+
+
+def calculateMCDAForPriorityScoresWithEligibility(priorityScores: pd.DataFrame, qeia: QEIAMatrix) -> pd.DataFrame:
+    """Calcualate the MCDA outputs for a supplied set of priority scores, QEIA matrix and eligibility table
+
+    Args:
+        priorityScores (pd.DataFrame): Dataframe containing the priority scores for each input polygon ID
+        qeia (QEIAMatrix): The QEIA matrix to use for this MCDA calculation
+
+    Returns:
+        pd.DataFrame: A finalised MCDA table with total/rank for each input polygon ID
+    """
     
-#     qeiaMultiplier = templateToQEIAMultiplier(priorityScores, qeia)
+    qeiaMultiplier = templateToQEIAMultiplier(priorityScores, qeia)
 
-#     # Adjusted the following as original script without iloc did not work due to character columns:
-#     mcda = priorityScores.copy(deep=True)
-#     mcda.iloc[:, 2:] = priorityScores.iloc[:, 2:].mul(qeiaMultiplier.iloc[:, 2:])
-#     mcda['total'] = mcda.iloc[:, 2:].sum(axis=1)
-#     mcda['rank'] = mcda.groupby('Parcel')['total'].rank(method='first', ascending=False)
+    # Adjusted the following as original script without iloc did not work due to character columns:
+    mcda = priorityScores.copy(deep=True)
+    mcda.iloc[:, 2:] = priorityScores.iloc[:, 2:].mul(qeiaMultiplier.iloc[:, 2:])
+    mcda['total'] = mcda.iloc[:, 2:].sum(axis=1)
+    mcda['rank'] = mcda.groupby('Parcel')['total'].rank(method='first', ascending=False)
 
-#     return mcda.sort_values(['Parcel', 'rank'])
-
-
-# ## Create alternative dummy QEIAs for testing ------------------------------
-
-# # Rescaled -1 to 1 - just divide by 4
-# qeia_downweighted = dummy_qeia / 4
-# print("Downweighted QEIA - divided by 4:")
-# print(qeia_downweighted)
-# # qeia_downweighted.to_clipboard()
-
-# # Rescale without any strength - only 3 possible values: -1, 0, 1
-# qeia_nostrength = np.sign(dummy_qeia)
-# print("No strength QEIA - just values of -1, 0, 1")
-# print(qeia_nostrength)
-# #qeia_nostrength.to_clipboard()
-
-# # ## Run dummy tests with QEIAs --------------------------------------------------
-
-# dummy_mcda_0 = calculateMCDAForPriorityScoresWithEligibility(priorityScores=dummy_ps, qeia=dummy_qeia)
-# print("DUMMY MCDA - 0: -----------------------------------------------")
-# print(dummy_mcda_0)
-# # dummy_mcda_0.to_csv(dummy_path + "Results/Dummy_MCDA_0.csv")
-
-# dummy_mcda_downweighted = calculateMCDAForPriorityScoresWithEligibility(priorityScores=dummy_ps, qeia=qeia_downweighted)
-# print("DUMMY MCDA - DOWNWEIGHTED: -------------------------------------")
-# print(dummy_mcda_downweighted)
-# # dummy_mcda_downweighted.to_csv(dummy_path + "Results/Dummy_MCDA_Downweighted.csv")
+    return mcda.sort_values(['Parcel', 'rank'])
 
 
-# dummy_mcda_nostrength = calculateMCDAForPriorityScoresWithEligibility(priorityScores=dummy_ps, qeia=qeia_nostrength)
-# print("DUMMY MCDA - NO STRENGTH: --------------------------------------")
-# print(dummy_mcda_nostrength)
-# # dummy_mcda_nostrength.to_csv(dummy_path + "Results/Dummy_MCDA_NoStrength.csv")
+## Create alternative dummy QEIAs for testing ------------------------------
+
+# Rescaled -1 to 1 - just divide by 4
+qeia_downweighted = dummy_qeia / 4
+print("Downweighted QEIA - divided by 4:")
+print(qeia_downweighted)
+# qeia_downweighted.to_clipboard()
+
+# Rescale without any strength - only 3 possible values: -1, 0, 1
+qeia_nostrength = np.sign(dummy_qeia)
+print("No strength QEIA - just values of -1, 0, 1")
+print(qeia_nostrength)
+#qeia_nostrength.to_clipboard()
+
+# ## Run dummy tests with QEIAs --------------------------------------------------
+
+dummy_mcda_0 = calculateMCDAForPriorityScoresWithEligibility(priorityScores=dummy_ps, qeia=dummy_qeia)
+print("DUMMY MCDA - 0: -----------------------------------------------")
+print(dummy_mcda_0)
+# dummy_mcda_0.to_csv(dummy_path + "Results/Dummy_MCDA_0_weightedPS.csv")
+
+dummy_mcda_downweighted = calculateMCDAForPriorityScoresWithEligibility(priorityScores=dummy_ps, qeia=qeia_downweighted)
+print("DUMMY MCDA - DOWNWEIGHTED: -------------------------------------")
+print(dummy_mcda_downweighted)
+# dummy_mcda_downweighted.to_csv(dummy_path + "Results/Dummy_MCDA_Downweighted_weightedPS.csv")
+
+dummy_mcda_nostrength = calculateMCDAForPriorityScoresWithEligibility(priorityScores=dummy_ps, qeia=qeia_nostrength)
+print("DUMMY MCDA - NO STRENGTH: --------------------------------------")
+print(dummy_mcda_nostrength)
+# dummy_mcda_nostrength.to_csv(dummy_path + "Results/Dummy_MCDA_NoStrength_weightedPS.csv")
