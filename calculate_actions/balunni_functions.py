@@ -305,3 +305,73 @@ def check_xyz_coordinate_structure(
     )
 
     return results
+
+# Need to work out the duplicate ID thing and match up outputs to parcel IDs first I think. 
+def stitchoutputs(input_folder: Path, output_folder: Path, id_column: str = "id.1", search_text: str = "priority_scores", file_pattern: str = "*"):
+    """
+    This function takes an input folder containing a set of output csv files representing priority scores for different land parcel batches and stitches them together
+    It then writes a master output file 
+    
+    Args:
+        input_folder (Path): An input folder path containing all the relevant csv files
+        output_folder (Path): An output folder path to write outputs too
+        id_column (str): An ID column field that is consistent across the output results, defaults to id.1
+        file_pattern (str): An input and output file type to read/write to
+        search_text (str): A consistent string across each of the outputs - defaults to priority_scores
+        
+    Returns:
+        pd.DataFrame: A combined output dataframe 
+    """
+
+    # Search for file extension in input folder containing search string
+    files = [
+        file
+        for file in input_folder.rglob(file_pattern)
+        if search_text in file.name
+    ]
+
+    if len(files) == 0:
+        raise ValueError("No files found")
+
+    print(f"Found {len(files)} matching files")
+
+    # Create empty master dataframe and empty list of expected columns to be filled by first df
+    dfs = []
+    expected_columns = None
+
+    # Read in each file, check for id column, rename this column to parcel_id
+    for file in files:
+        df = pd.read_csv(file)
+
+        if id_column not in df:
+            raise ValueError(f"{file} does not contain {id_column}")
+
+        df = df.rename(columns={f"{id_column}": "parcel_id"})
+
+        if expected_columns is None:
+            expected_columns = list(df.columns)
+        elif set(df.columns) != set(expected_columns):
+            raise ValueError(f"{file} does not contain the same columns as previous file")
+
+        dfs.append(df)
+
+    master_output = pd.concat(dfs, ignore_index=True)
+
+    # Check for duplicate parcel_ids
+    duplicates = master_output["parcel_id"].duplicated()
+
+    if duplicates.any():
+        print(
+            f"Warning: {duplicates.sum():,} duplicate IDs found"
+        )
+
+    # Write output
+    output_folder.mkdir(parents=True, exist_ok=True)
+
+    output_file = output_folder / f"{search_text}_combined.csv"
+
+    master_output.to_csv(output_file, index = False)
+
+    print(f"Wrote {len(master_output):,} records to {output_file}")
+
+    return master_output
