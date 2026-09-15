@@ -138,6 +138,7 @@ from common.qeia import QEIAMatrix
 
 # print(alt_pS_4)
 
+
 ## PART 2: TESTING QEIA DOWNSCALING ######################################################################################################################################################
 print("TESTING: QEIA DOWNSCALING =================================================================================")
 # Read in new dummy priority scores and dummy QEIA
@@ -174,11 +175,11 @@ with open(qeia_path, 'r') as f:
 
 # Define createDataFrame function - for some reason this doesn't import with QEIAMatrix?
 def createDataFrame(self) -> pd.DataFrame:
-    """Returns a Pandas dataframe representation of this QEIAMatrix
+    # ""Returns a Pandas dataframe representation of this QEIAMatrix
 
-    Returns:
-        pd.DataFrame: A dataframe representation of this QEIAMatrix object
-    """
+    # Returns:
+    #     pd.DataFrame: A dataframe representation of this QEIAMatrix object
+    # ""
     row = {}
     
     for option in self.options:
@@ -212,15 +213,15 @@ def templateToQEIAMultiplier(template: pd.DataFrame, qeia: QEIAMatrix) -> pd.Dat
 
 
 def calculateMCDAForPriorityScoresWithEligibility(priorityScores: pd.DataFrame, qeia: QEIAMatrix) -> pd.DataFrame:
-    """Calcualate the MCDA outputs for a supplied set of priority scores, QEIA matrix and eligibility table
+    # ""Calcualate the MCDA outputs for a supplied set of priority scores, QEIA matrix and eligibility table
 
-    Args:
-        priorityScores (pd.DataFrame): Dataframe containing the priority scores for each input polygon ID
-        qeia (QEIAMatrix): The QEIA matrix to use for this MCDA calculation
+    # Args:
+    #     priorityScores (pd.DataFrame): Dataframe containing the priority scores for each input polygon ID
+    #     qeia (QEIAMatrix): The QEIA matrix to use for this MCDA calculation
 
-    Returns:
-        pd.DataFrame: A finalised MCDA table with total/rank for each input polygon ID
-    """
+    # Returns:
+    #     pd.DataFrame: A finalised MCDA table with total/rank for each input polygon ID
+    # ""
     
     qeiaMultiplier = templateToQEIAMultiplier(priorityScores, qeia)
 
@@ -232,7 +233,7 @@ def calculateMCDAForPriorityScoresWithEligibility(priorityScores: pd.DataFrame, 
 
     return mcda.sort_values(['Parcel', 'rank'])
 
-
+"""
 ## Create alternative dummy QEIAs for testing ------------------------------
 
 # Rescaled -1 to 1 - just divide by 4
@@ -263,3 +264,11 @@ dummy_mcda_nostrength = calculateMCDAForPriorityScoresWithEligibility(prioritySc
 print("DUMMY MCDA - NO STRENGTH: --------------------------------------")
 print(dummy_mcda_nostrength)
 # dummy_mcda_nostrength.to_csv(dummy_path + "Results/Dummy_MCDA_NoStrength_weightedPS.csv")
+"""
+
+## PART 3: TESTING SERVICE GROUPINGS ######################################################################################################################################################
+print("TESTING: SERVICE GROUPINGS =================================================================================")
+
+print("TEST 1: No service grouping (just MCDA 0) --------------------------------------------")
+dummy_mcda_0 = calculateMCDAForPriorityScoresWithEligibility(priorityScores=dummy_ps, qeia=dummy_qeia)
+
