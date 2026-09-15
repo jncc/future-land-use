@@ -166,7 +166,7 @@ dummy_ps[weighting_columns] = dummy_ps[weighting_columns].apply(lambda row: row 
 dummy_ps.drop(columns=['serviceSum', 'max_serviceSum'], inplace=True)
 print("Weighted by max service sum:")
 print(dummy_ps)
-dummy_ps.to_clipboard()
+# dummy_ps.to_clipboard()
 
 qeia_path = dummy_path + "dummy_qeia.json"
 with open(qeia_path, 'r') as f:
@@ -269,6 +269,80 @@ print(dummy_mcda_nostrength)
 ## PART 3: TESTING SERVICE GROUPINGS ######################################################################################################################################################
 print("TESTING: SERVICE GROUPINGS =================================================================================")
 
-print("TEST 1: No service grouping (just MCDA 0) --------------------------------------------")
-dummy_mcda_0 = calculateMCDAForPriorityScoresWithEligibility(priorityScores=dummy_ps, qeia=dummy_qeia)
+# This investigation is specifically looking at the implications of having 1/niES (i.e. 1 / number of indicators in each
+# service) as a multiplier, to downweight services with more indicators
+# We want to see if using or not using these groupings is expected to have a large impact on final scores
 
+print("TEST 1: No service grouping (just MCDA 0) --------------------------------------------")
+service_test1_mcda = calculateMCDAForPriorityScoresWithEligibility(priorityScores=dummy_ps, qeia=dummy_qeia)
+print(service_test1_mcda)
+service_test1_mcda.to_csv(dummy_path + "Results/Service_Test1_MCDA.csv")
+
+print("TEST 2: Service weightings from dummy priority scores --------------------------------")
+
+service_test = dummy_ps.copy(deep=True)
+
+# Get unique services present
+services = list(set([i.split("_")[1] for i in data_columns]))
+print("All services:", services)
+
+for i in services:
+    print("Service: ", i)
+    service_columns = list(filter(lambda k: i in k, data_columns))
+    print("Service columns: ", service_columns)
+    print("Number of indicators: ", len(service_columns))
+
+    # The final multiplier would be (1/n(ES))/n(iES), but for testing keeping it to just 1/n(iES) for easier evaluation of results
+    # (the 1/nES would not make a difference to rankings as it is a constant)
+    print("( 1/", len(service_columns), ")")
+    multiplier = (1/ len(service_columns))
+    print(multiplier)
+
+    service_test[service_columns] = service_test[service_columns].apply(lambda row: multiplier * row)
+
+print(service_test)
+# service_test.to_clipboard()
+
+service_test2_mcda = calculateMCDAForPriorityScoresWithEligibility(service_test, dummy_qeia)
+print(service_test2_mcda)
+# service_test2_mcda.to_clipboard()
+# service_test2_mcda.to_csv(dummy_path + "Results/Service_Test2_MCDA.csv")
+
+print("TEST 3: Service weightings with test recategorisation ---------------------------------------------")
+
+# Read in recategorised version of dummy priority scores - this version has NDeposition under
+# the AirP service group instead of Biod
+
+dummy_ps_recat = pd.read_csv(dummy_path + "Dummy_Data_2_TestRecategorise.csv")
+print("Alternative dummy PS with recategorised NDeposition:")
+print(dummy_ps_recat)
+
+# Apply parcel level normalisation to recategorised dummy PS
+data_columns_recat = dummy_ps_recat.columns.difference(['Parcel', 'Option'])
+dummy_ps_recat['serviceSum'] = dummy_ps_recat[data_columns_recat].sum(axis=1)
+dummy_ps_recat['max_serviceSum'] = dummy_ps_recat.groupby(['Parcel'])['serviceSum'].transform("max")
+weighting_columns_recat = dummy_ps_recat.columns.difference(['Parcel', 'Option', 'serviceSum'])
+dummy_ps_recat[weighting_columns_recat] = dummy_ps_recat[weighting_columns_recat].apply(lambda row: row / row['max_serviceSum'], axis=1)
+dummy_ps_recat.drop(columns=['serviceSum', 'max_serviceSum'], inplace=True)
+
+services_recat = list(set([i.split("_")[1] for i in data_columns_recat]))
+
+for i in services_recat:
+    print("Service: ", i)
+    service_columns = list(filter(lambda k: i in k, data_columns_recat))
+    print("Service columns: ", service_columns)
+    print("Number of indicators: ", len(service_columns))
+
+    # The final multiplier would be (1/n(ES))/n(iES), but for testing keeping it to just 1/n(iES) for easier evaluation of results
+    # (the 1/nES would not make a difference to rankings as it is a constant)
+    print("( 1/", len(service_columns), ")")
+    multiplier = (1/ len(service_columns))
+    print(multiplier)
+
+    dummy_ps_recat[service_columns] = dummy_ps_recat[service_columns].apply(lambda row: multiplier * row)
+
+print(dummy_ps_recat)
+# dummy_ps_recat.to_clipboard()
+
+service_test3_mcda = calculateMCDAForPriorityScoresWithEligibility(dummy_ps_recat, dummy_qeia)
+# service_test3_mcda.to_csv(dummy_path + "Results/Service_Test3_MCDA.csv")
