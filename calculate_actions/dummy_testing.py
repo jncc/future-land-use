@@ -233,12 +233,11 @@ def calculateMCDAForPriorityScoresWithEligibility(priorityScores: pd.DataFrame, 
 
     return mcda.sort_values(['Parcel', 'rank'])
 
-"""
 ## Create alternative dummy QEIAs for testing ------------------------------
 
-# Rescaled -1 to 1 - just divide by 4
-qeia_downweighted = dummy_qeia / 4
-print("Downweighted QEIA - divided by 4:")
+# Rescaled -1 to 1 - just divide by 3
+qeia_downweighted = dummy_qeia / 3
+print("Downweighted QEIA - divided by 3:")
 print(qeia_downweighted)
 # qeia_downweighted.to_clipboard()
 
@@ -253,18 +252,17 @@ print(qeia_nostrength)
 dummy_mcda_0 = calculateMCDAForPriorityScoresWithEligibility(priorityScores=dummy_ps, qeia=dummy_qeia)
 print("DUMMY MCDA - 0: -----------------------------------------------")
 print(dummy_mcda_0)
-# dummy_mcda_0.to_csv(dummy_path + "Results/Dummy_MCDA_0_weightedPS.csv")
+# dummy_mcda_0.to_csv(dummy_path + "Results/Fixed_QEIA/Dummy_MCDA_0_weightedPS.csv")
 
 dummy_mcda_downweighted = calculateMCDAForPriorityScoresWithEligibility(priorityScores=dummy_ps, qeia=qeia_downweighted)
 print("DUMMY MCDA - DOWNWEIGHTED: -------------------------------------")
 print(dummy_mcda_downweighted)
-# dummy_mcda_downweighted.to_csv(dummy_path + "Results/Dummy_MCDA_Downweighted_weightedPS.csv")
+# dummy_mcda_downweighted.to_csv(dummy_path + "Results/Fixed_QEIA/Dummy_MCDA_Downweighted_weightedPS.csv")
 
 dummy_mcda_nostrength = calculateMCDAForPriorityScoresWithEligibility(priorityScores=dummy_ps, qeia=qeia_nostrength)
 print("DUMMY MCDA - NO STRENGTH: --------------------------------------")
 print(dummy_mcda_nostrength)
-# dummy_mcda_nostrength.to_csv(dummy_path + "Results/Dummy_MCDA_NoStrength_weightedPS.csv")
-"""
+# dummy_mcda_nostrength.to_csv(dummy_path + "Results/Fixed_QEIA/Dummy_MCDA_NoStrength_weightedPS.csv")
 
 ## PART 3: TESTING SERVICE GROUPINGS ######################################################################################################################################################
 print("TESTING: SERVICE GROUPINGS =================================================================================")
@@ -276,7 +274,7 @@ print("TESTING: SERVICE GROUPINGS ==============================================
 print("TEST 1: No service grouping (just MCDA 0) --------------------------------------------")
 service_test1_mcda = calculateMCDAForPriorityScoresWithEligibility(priorityScores=dummy_ps, qeia=dummy_qeia)
 print(service_test1_mcda)
-service_test1_mcda.to_csv(dummy_path + "Results/Service_Test1_MCDA.csv")
+# service_test1_mcda.to_csv(dummy_path + "Results/Fixed_QEIA/Service_Test1_MCDA.csv")
 
 print("TEST 2: Service weightings from dummy priority scores --------------------------------")
 
@@ -306,7 +304,7 @@ print(service_test)
 service_test2_mcda = calculateMCDAForPriorityScoresWithEligibility(service_test, dummy_qeia)
 print(service_test2_mcda)
 # service_test2_mcda.to_clipboard()
-# service_test2_mcda.to_csv(dummy_path + "Results/Service_Test2_MCDA.csv")
+# service_test2_mcda.to_csv(dummy_path + "Results/Fixed_QEIA/Service_Test2_MCDA.csv")
 
 print("TEST 3: Service weightings with test recategorisation ---------------------------------------------")
 
@@ -345,4 +343,4 @@ print(dummy_ps_recat)
 # dummy_ps_recat.to_clipboard()
 
 service_test3_mcda = calculateMCDAForPriorityScoresWithEligibility(dummy_ps_recat, dummy_qeia)
-# service_test3_mcda.to_csv(dummy_path + "Results/Service_Test3_MCDA.csv")
+# service_test3_mcda.to_csv(dummy_path + "Results/Fixed_QEIA/Service_Test3_MCDA.csv")
