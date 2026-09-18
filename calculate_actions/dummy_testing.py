@@ -245,7 +245,35 @@ print(qeia_downweighted)
 qeia_nostrength = np.sign(dummy_qeia)
 print("No strength QEIA - just values of -1, 0, 1")
 print(qeia_nostrength)
-#qeia_nostrength.to_clipboard()
+# qeia_nostrength.to_clipboard()
+
+# Smaller impact - rescale so that:
+# 0 = 0.0
+# 1 = 0.75
+# 2 = 1.0
+# 3 = 1.25
+# Because this actually changes the distance between weights, this should have an effect on final
+# scores/rankings unlike dividing by 3 which keeps the ratios between impact scores.
+# This could be an option if we still wanted to have QEIA impact scores, but wanted them to have a 
+# smaller effect on outputs (either because we don't have full confidence in them or it makes outputs
+# more sensible)
+
+"""""
+qeia_smallerimpact = dummy_qeia.replace({1.0 : 0.75, 2.0 : 1.0, 3.0 : 1.25,
+                                         -1.0 : -0.75, -2.0 : -1.0, -3.0 : -1.25})
+"""
+# Tested the above version but this did not have enough difference to change the action order 
+
+# Test with even smaller impact range: 
+# 0 = 0.0
+# 1 = 1.0
+# 2 = 1.1
+# 3 = 1.2
+qeia_smallerimpact = dummy_qeia.replace({1.0 : 1.0, 2.0 : 1.1, 3.0 : 1.2,
+                                         -1.0 : -1.0, -2.0 : -1.1, -3.0 : -1.2})
+print("Smaller impact QEIA:")
+print(qeia_smallerimpact)
+# qeia_smallerimpact.to_clipboard()
 
 # ## Run dummy tests with QEIAs --------------------------------------------------
 
@@ -263,6 +291,11 @@ dummy_mcda_nostrength = calculateMCDAForPriorityScoresWithEligibility(prioritySc
 print("DUMMY MCDA - NO STRENGTH: --------------------------------------")
 print(dummy_mcda_nostrength)
 # dummy_mcda_nostrength.to_csv(dummy_path + "Results/Fixed_QEIA/Dummy_MCDA_NoStrength_weightedPS.csv")
+
+dummy_mcda_smallerimpact = calculateMCDAForPriorityScoresWithEligibility(priorityScores=dummy_ps, qeia=qeia_smallerimpact)
+print("DUMMY MCDA - SMALLER IMPACT: -----------------------------------")
+print(dummy_mcda_smallerimpact)
+# dummy_mcda_smallerimpact.to_csv(dummy_path + "Results/Fixed_QEIA/Dummy_MCDA_SmallerImpact_weightedPS.csv")
 
 ## PART 3: TESTING SERVICE GROUPINGS ######################################################################################################################################################
 print("TESTING: SERVICE GROUPINGS =================================================================================")
