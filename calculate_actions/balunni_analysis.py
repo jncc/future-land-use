@@ -18,9 +18,11 @@ data_path = "O:\\EAT\\Ecosystems Analysis\\BALLUNI\\Data\\"
 # Read in LFA and stocking data 
 lfa_data = pd.read_csv(Path(data_path)/ "LPIS_Fields\\2024_field_data_extract.csv")
 stocking_data = gpd.read_parquet(Path(data_path) / "Nutrient Loading per field\\jncc_2024_extract.parquet")
+lpis_not_in_stocking = gpd.read_file((Path(input_path) / "Non-stocking Parcels\\parcel_batch_001.gpkg"))
 
 # Read in peatland and elevation data
 jhi_peat = gpd.read_file(Path(input_path) / "JHI_Peatland_Processed.gpkg")
+jhi_raw = gpd.read_file(Path(data_path) / "Peatland\\Peatland.gpkg")
 with rasterio.open("O:\\EAT\\EOMonitoringApplications\\NorthernIreland2022\\Topography\\outputs\\NI_DTM_10m_TM65_2023_merged.tif") as src:
     dem = src.read(1)
     transform = src.transform
@@ -30,6 +32,7 @@ with rasterio.open("O:\\EAT\\EOMonitoringApplications\\NorthernIreland2022\\Topo
 #peatland_stitch = stitchoutputs(Path(extraction_path), Path(extraction_path), search_text="peatland_50k", file_pattern= "*.csv")
 #elevation_stitch = stitchoutputs(Path(extraction_path), Path(extraction_path), id_column= "id", search_text="elevation_50k", file_pattern= "*.csv")
 peatland_stitch = pd.read_csv(Path(extraction_path)/ "peatland_50k_combined.csv")
+peatland_non_stocking = pd.read_csv(Path(extraction_path)/ "peatland_non-stocking_parcels_perecentages\\priority_scores_peatland_non-stocking_parcels_perecentages.csv").rename(columns={"id.1": "parcel_id"})
 
 ## STEP 2: Calculate the average stocking density of each livestock category on each combination of peatland and land classification
 # Check for duplicate parcels, CRS and unqiue ID columns
@@ -115,11 +118,16 @@ print(stocking_data["geometry_area_diff"].describe()) # identical, suggest using
 
 # Join datasets up 
 stocking_peatland = peatland_stitch.join(stocking_data.set_index("field_id_code"), on="parcel_id").join(lfa_data.set_index("FieldNo"), on="parcel_id")
+non_stocking_peatland = peatland_non_stocking.join(lpis_not_in_stocking.set_index("ID"), on ="parcel_id").join(lfa_data.set_index("FieldNo"), on="parcel_id")
 
 # Count number of parcels retained and make sure IDs matches original stocking_data, should be equal
 peatland_ids = set(stocking_peatland["parcel_id"].dropna())
 stocking_ids = set(stocking_data["field_id_code"].dropna())
+non_stocking_peatland_ids = set(peatland_non_stocking["parcel_id"].dropna())
 lfa_ids = set(lfa_data["FieldNo"].dropna())
+
+# Crosscheck that parcels used in peatland extraction have all made it over
+non_stocking_ids = set(lpis_not_in_stocking["ID"].dropna())
 
 if peatland_ids != stocking_ids:
     print("Error - parcel IDs do not match between datasets")
@@ -130,12 +138,22 @@ if peatland_ids != stocking_ids:
     print(f"Missing from peatland: {len(missing_from_peatland)}") # One parcel missing which is a tiny island in an estuary - none of the peatland datasets overlap and no reported livestock so ignoring
     print(f"Missing from stocking: {len(missing_from_stocking)}")
 
+if non_stocking_ids != non_stocking_peatland_ids:
+    print("Warning - parcel IDs do not match between datasets")
+
+    missing_from_non_stocking = non_stocking_peatland_ids - non_stocking_ids
+    missing_from_peatland_non_stocking = non_stocking_ids - non_stocking_peatland_ids
+
+    print(f"Missing from Peatland: {len(missing_from_peatland_non_stocking)}") # Should be 0, but is 2, these are 3/108/085/54 and 55. Also in estuary with no peatland overlapping so fine.
+    print(f"Missing from non-stocking: {len(missing_from_non_stocking)}")  # Should be 0
+
 # Subset lfa dataset
-lfa_not_in_stocking = lfa_data.loc[
-    ~lfa_data["FieldNo"].isin(stocking_data["field_id_code"])
-]
-print(lfa_not_in_stocking)
-print(lfa_not_in_stocking["MEAArea"].sum()) # 63k ha from 42k parcels not in the stocking data
+# lfa_not_in_stocking = (lfa_data.loc[
+#     ~lfa_data["FieldNo"].isin(stocking_data["field_id_code"])
+# ].drop_duplicates(subset=["FieldNo"]))
+# print(lfa_not_in_stocking)
+# print(lfa_not_in_stocking["MEAArea"].sum()) # 61k ha from 42k parcels not in the stocking data
+# #lfa_not_in_stocking.to_csv((Path(output_path) / "LPIS_Fields_no_stocking.csv")) # This data is then used to re-process LPIS fields for peatland classification outside of stocking areas
 
 # Check area columns are still intact - both should return nothing
 mea_nas = stocking_peatland["field_mea_ha"].isna().sum()
@@ -146,9 +164,18 @@ peatland_cols = [
     'parcel_id',
     'layer',
     'class',
-    'percent',
+    'percent'
+]
+
+# parcel area and geometry columns
+area_cols = [
     'geometry_area',
-    'field_mea_ha'
+    'field_mea_ha' 
+]
+
+# Only needed for non stocking data
+lpis_geometry = [
+    'geometry'
 ]
 
 # Relevant stocking data columns
@@ -162,15 +189,18 @@ lfa_cols = lfa_data.loc[
 ].columns
 
 # subset columns using lists above and filter to just JHI data
-clean_stocking_peatland = stocking_peatland.loc[(stocking_peatland["layer"] == "JHI_Peatland"), peatland_cols + headcount_cols.tolist() + lfa_cols.tolist()]
+clean_stocking_peatland = stocking_peatland.loc[(stocking_peatland["layer"] == "JHI_Peatland"), peatland_cols + area_cols + headcount_cols.tolist() + lfa_cols.tolist()]
+clean_non_stocking_peatland = non_stocking_peatland.loc[(non_stocking_peatland["layer"] == "JHI_Peatland"), peatland_cols + lfa_cols.tolist() + lpis_geometry]
+clean_stocking_peatland["parcel_id"].nunique() #235,777 parcels overlap with JHI data
+clean_non_stocking_peatland["parcel_id"].nunique() #15,525 parcels with no stocking data overlap with JHI
 
-# Extract rows corresponding to JHI_peatland with 100% class coverage for use in stocking density calculations
-clean_stocking_peatland_50_pct = clean_stocking_peatland.loc[(clean_stocking_peatland["percent"] >= 50)]
+# Extract rows corresponding to JHI_peatland with 90% class coverage for use in stocking density calculations
+clean_stocking_peatland_90_pct = clean_stocking_peatland.loc[(clean_stocking_peatland["percent"] >= 90)]
 
 # Check that no parcel IDs appear twice for calculations - some do because of different business codes in LFA data etc. This is fine but we need to make sure the headcount/area is only considered once for each parcel
-duplicate_check = clean_stocking_peatland_50_pct["parcel_id"].duplicated(keep="first")
-print(clean_stocking_peatland_50_pct.loc[duplicate_check])
-clean_stocking_peatland_50_pct.drop_duplicates("parcel_id", inplace=True) # Retain only one parcel for stocking density calculations
+duplicate_check = clean_stocking_peatland_90_pct["parcel_id"].duplicated(keep="first")
+print(clean_stocking_peatland_90_pct.loc[duplicate_check])
+clean_stocking_peatland_90_pct.drop_duplicates("parcel_id", inplace=True) # Retain only one parcel for stocking density calculations
 
 # # Investigate these further
 # stocking_data["field_id_code"].value_counts().loc[
@@ -184,7 +214,7 @@ clean_stocking_peatland_50_pct.drop_duplicates("parcel_id", inplace=True) # Reta
 
 # Get counts of parcels used in calculations for sample size stats
 class_counts = (
-    clean_stocking_peatland_50_pct
+    clean_stocking_peatland_90_pct
     .groupby("class")["Land Type"]
     .value_counts()
     .reset_index()
@@ -193,19 +223,19 @@ class_counts = (
 class_counts.columns = ["class", "Land Type", "count"]
 
 # Write out
-#class_counts.to_csv(Path(output_path) / "peatland_land_type_sample_sizes_NI_50_pct.csv")
+#class_counts.to_csv(Path(output_path) / "peatland_land_type_sample_sizes_NI_90_pct.csv")
 
 # Now calculate the  stocking density per hectare
 # Sum livestock counts and area by class
 livestock_totals = (
-    clean_stocking_peatland_50_pct
+    clean_stocking_peatland_90_pct
     .groupby(["class", "Land Type"])[headcount_cols.tolist()]
     .sum()
 )
 
-# Check which area total we want first before doing calculations. Assume field_mea?
+# We want mea areas for stocking density calculations as this is the area where animals graze
 area_totals = (
-    clean_stocking_peatland_50_pct
+    clean_stocking_peatland_90_pct
     .groupby(["class", "Land Type"])["field_mea_ha"]
     .sum()
 )
@@ -215,10 +245,10 @@ densities = livestock_totals.div(area_totals, axis=0)
 
 print(densities)
 
-#densities.to_csv(Path(output_path) / "peatland_land_type_stocking_densities_NI_50_pct.csv")
+#densities.to_csv(Path(output_path) / "peatland_land_type_stocking_densities_NI_90_pct.csv")
 
 # Alternative approach - calculate stocking density on each of the parcels and then take the average of these 
-density_df = clean_stocking_peatland_50_pct.copy()
+density_df = clean_stocking_peatland_90_pct.copy()
 
 for livestock in headcount_cols:
     density_df[livestock] = (
@@ -234,7 +264,7 @@ averages = (
 
 print(averages)
 
-#averages.to_csv(Path(output_path) / "peatland_land_type_avg_parcel_stocking_densities_NI_50_pct.csv")
+#averages.to_csv(Path(output_path) / "peatland_land_type_avg_parcel_stocking_densities_NI_90_pct.csv")
 
 ## STEP 3: Work out what the area of each peatland class is in upland v lowland
 # This is done using a zonal stats approach to work out what proportion of each class is above/below a 150m threshold
@@ -288,6 +318,16 @@ jhi_peat["pct_above"] = [
 jhi_peat["pct_below"] = 100 - jhi_peat["pct_above"]
 
 jhi_peat["area_ha"] = jhi_peat.geometry.area / 10000
+jhi_raw["area_ha"] = jhi_raw.geometry.area / 10000
+summary_raw = (
+    jhi_raw
+    .groupby("Class")
+    .agg(
+        total_area_ha=("area_ha", "sum")
+    )
+    .reset_index()
+)
+
 
 jhi_peat["area_above_ha"] = (
     jhi_peat["area_ha"] *
@@ -311,6 +351,7 @@ summary_upland = (
     .reset_index()
 )
 
+
 summary_upland["pct_above"] = (
     100 *
     summary_upland["area_above_ha"] /
@@ -332,9 +373,26 @@ clean_stocking_peatland["peat_area_ha"] = (
     (clean_stocking_peatland["percent"] / 100) * clean_stocking_peatland["geometry_area"] # use geometry area as looking at overall proportions not claimed areas
 )
 
-# Get total area of each land classification from parcel data, for each peatland class x land type combo
+# Also do this for non-stocking areas - first create convert back to GeoPandas Dataframe and create geometry area column
+clean_non_stocking_peatland = gpd.GeoDataFrame(
+    clean_non_stocking_peatland,
+    geometry="geometry",
+    crs="EPSG:29902"  # or whatever CRS is correct
+)
+clean_non_stocking_peatland["geometry_area"] = clean_non_stocking_peatland.geometry.area / 10000 
+clean_non_stocking_peatland["peat_area_ha"] = (
+    (clean_non_stocking_peatland["percent"] / 100) * clean_non_stocking_peatland["geometry_area"] # use geometry area as looking at overall proportions not claimed areas
+)
+
+# Messy bind as column names are not all the same 
+clean_lpis_peatland = pd.concat(
+    [clean_stocking_peatland, clean_non_stocking_peatland],
+    ignore_index=True
+)
+
+# Get total area of each land classification from parcel data, for each peatland class x land type combo - CHANGE IF ONLY WANTING STOCKING DATA
 peat_classification_areas = (
-    clean_stocking_peatland
+    clean_lpis_peatland
     .groupby(["class", "Land Type"])["peat_area_ha"]
     .sum()
     .reset_index()
@@ -422,15 +480,15 @@ check = (
 print(check)
 
 # Rearrange row order and write
-#total_peat_areas.sort_values(by=['class']).to_csv(Path(output_path) / "peatland_land_type_area_proportions.csv", index=False)
+#total_peat_areas.sort_values(by=['class']).to_csv(Path(output_path) / "peatland_land_type_area_proportions_all_lpis.csv", index=False)
 
 ## STEP 5: Calculate the percentages of different crop types grown on cropland class in the JHI data 
-# We have the total area of Crops class from summary_upland 
-clean_cropland_peat = clean_stocking_peatland.loc[(clean_stocking_peatland["class"] == "Crops")] # 33,238 parcels
+# We have the total area of Crops class from summary_upland - UPDATE WITH ADDITIONAL NON-STOCKING DATA
+clean_cropland_peat = clean_lpis_peatland.loc[(clean_lpis_peatland["class"] == "Crops")] # 33,238 parcels, now 35,728 parcels
 
 # Some parcels have multiple crops being grown on them, inspect these to identify values to remove from proportion estimates
 multi_crops = clean_cropland_peat["parcel_id"].duplicated(keep=False)
-print(clean_cropland_peat.loc[(multi_crops)]) # so UsageCode is the key column containing info, 657 parcels
+print(clean_cropland_peat.loc[(multi_crops)]) # so UsageCode is the key column containing info, 657 parcels now 800 parcels with non-stocking
 
 # Problem we have is that the peatland area is not necessarily 100% of the parcel, 
 # where we have multiple crops we don't know how this aligns with the peatland coverage
@@ -487,4 +545,4 @@ crop_check = (
 
 print(crop_check) # 99.99%, but this is expected because we dropped about 2% of parcels earlier on with multiple crop types. 
 
-#crop_proportions.sort_values(by=['crop_area_ha'], ascending=False).to_csv(Path(output_path) / "crops_grown_on_peatland_crops_class.csv", index=False)
+#crop_proportions.sort_values(by=['crop_area_ha'], ascending=False).to_csv(Path(output_path) / "crops_grown_on_peatland_crops_class_all_lpis.csv", index=False)
