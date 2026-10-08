@@ -6,7 +6,7 @@ def templateToQEIAMultiplier(template: pd.DataFrame, qeia: QEIAMatrix) -> pd.Dat
     multiply the eligibility template by the QEIA matrix
 
     Args:
-        eligibilityTemplate (pd.DataFrame): A template dataframe with a row for each parcel ID/ eligible 
+        template (pd.DataFrame): A template dataframe with a row for each parcel ID/ eligible
         option pair (generated from the eligibilityTableToMCDAEligibilityTemplate function)
         qeia (QEIAMatrix): The QEIA matrix to use for this MCDA calculation
 
@@ -18,16 +18,17 @@ def templateToQEIAMultiplier(template: pd.DataFrame, qeia: QEIAMatrix) -> pd.Dat
     qeiaMatrix.drop(columns=qeiaMatrix.columns.difference(template.columns), inplace=True)
 
     # 0 out the template
-    template = template.copy()
-    for col in template.columns:
-        template[col].values[:] = 0
+    output = template.copy(deep=True)    
+
+    # Use pandas assignment instead of NumPy view mutation to avoid read-only buffers.
+    output.loc[:, output.columns] = 0
 
     for column in qeiaMatrix.columns:
         for option in qeiaMatrix.index:
-            if option in template.index.get_level_values('option'):
-                template.loc[pd.IndexSlice[:, option], column] = qeiaMatrix.loc[option, column]
+            if option in output.index.get_level_values('option'):
+                output.loc[pd.IndexSlice[:, option], column] = qeiaMatrix.loc[option, column]
 
-    return template
+    return output
 
 def calculateMCDAForPriorityScoresWithEligibility(priorityScores: pd.DataFrame, qeia: QEIAMatrix) -> pd.DataFrame:
     """Calcualate the MCDA outputs for a supplied set of priority scores, QEIA matrix and eligibility table
