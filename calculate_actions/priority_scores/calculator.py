@@ -70,7 +70,7 @@ def groupColumnAggregation(priorityScores: pd.DataFrame, group: str, eligibleOpt
     return priorityScores.drop(columns=groupColumns, errors='ignore')
 
 def calculateInitialPriorityScoreWeighting(priorityScores: pd.DataFrame) -> pd.DataFrame:
-    """Calculate the initial priority score weighting based on the QEIA matrix and eligibility table
+    """Calculate the initial priority score weighting by normalising for each parcel using the maximum priority score per parcel
 
     Args:
         priorityScores (pd.DataFrame): Dataframe containing the priority scores for each input polygon ID
@@ -96,7 +96,7 @@ def calculatePriorityScoreWeighting(priorityScores: pd.DataFrame, weightings: di
     Returns:
         pd.DataFrame: A DataFrame containing the weighted priority scores
     """
-    
+
     for layer, weight in weightings.items():
         if layer in priorityScores.columns:
             priorityScores[layer] *= weight
