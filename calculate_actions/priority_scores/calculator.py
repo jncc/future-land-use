@@ -103,9 +103,4 @@ def calculatePriorityScoreWeighting(priorityScores: pd.DataFrame, weightings: di
         else:
             raise ValueError(f'Layer {layer} not found in priority scores columns')
 
-    # Normalize the scores to ensure they sum to 1
-    priorityScores['total'] = priorityScores.sum(axis=1)
-    priorityScores = priorityScores.apply(lambda row: row / row['total'], axis=1)
-    priorityScores.drop(columns=['total'], inplace=True)
-
     return priorityScores
