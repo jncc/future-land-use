@@ -96,8 +96,7 @@ def calculatePriorityScoreWeighting(priorityScores: pd.DataFrame, weightings: di
     Returns:
         pd.DataFrame: A DataFrame containing the weighted priority scores
     """
-    # This code will need to be updated with the new weighting approach 
-    # (but doesn't make a difference now as we are not weighting services)
+    
     for layer, weight in weightings.items():
         if layer in priorityScores.columns:
             priorityScores[layer] *= weight
