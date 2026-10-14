@@ -1,5 +1,27 @@
+## Script Name: BALUNNI Functions
+## 
+## Author: Rory Barber, Ecosystems Analysis
+## 
+## Contact (if different from above): 
+## 
+## Date Created: 2026-08-20
+## 
+## Date Last Modified: 2026-10-14
+##
+## Licence: Open Government Licence
+## 
+## Abstract: This script develops a set of functions used to pre-process and analyse data for the Peatland Cost-benefit analysis. 
+##
+## Python version 3.13.11
+## Dependencies:
+##    
+## geopandas      pandas  
+## pathlib        numpy
+## rasterio       pyproj
+## ############################## ##
+
+
 import geopandas as gpd
-import shapely as shp
 from pathlib import Path
 import numpy as np
 import pandas as pd

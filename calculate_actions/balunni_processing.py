@@ -1,9 +1,27 @@
-# Script to perform geoprocessing for the BALUNNI cost-benefit analysis work
+## Script Name: BALUNNI Processing
+## 
+## Author: Rory Barber, Ecosystems Analysis
+## 
+## Contact (if different from above): 
+## 
+## Date Created: 2026-08-20
+## 
+## Date Last Modified: 2026-10-14
+##
+## Licence: Open Government Licence
+## 
+## Abstract: This script is used to pre-process input data ready for the extraction process to identify peatland overlaps with land parcels across NI. 
+##           It makes sure data is in the correct CRS, identifies a consistent ID column and creates batches of parcels for processing. 
+##
+## Python version 3.13.11
+## Dependencies:
+##    
+## geopandas      pandas  
+## pathlib        balunni_functions
+## ############################## ##
 
 import geopandas as gpd
-import shapely as shp
 import pandas as pd
-import pyogrio
 from pathlib import Path
 from balunni_functions import processPeatData, check_xyz_coordinate_structure, stitchXYZTiles, parcelBatchCreation
 
@@ -29,21 +47,17 @@ processPeatData(peatland_survey, 29902, "CLASS", output_path, "Peatland_Survey_P
 processPeatData(jhi_peatland, 29902, "Series", output_path, "AFBI_Peatland_Processed.gpkg")
 processPeatData(efs_peatland, 29902, "CLASS", output_path, "EFS_Peatland_Processed.gpkg")
 
-# Stitch together 10m DTM
-dtm_sheets_checked = check_xyz_coordinate_structure(Path(dtm_path), 10, 5)
-stitchXYZTiles(Path(dtm_path), Path(dtm_path) / "OSNI_10m_DTM.tif", 29902, 10)
+# Stitch together 10m DTM - Not used in the end due to issues with the DTM output, OSNI have shared a separate stitched together DTM which is read directly into the balunni_analysis.py script
+# dtm_sheets_checked = check_xyz_coordinate_structure(Path(dtm_path), 10, 5)
+# stitchXYZTiles(Path(dtm_path), Path(dtm_path) / "OSNI_10m_DTM.tif", 29902, 10)
 
-with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
-    print(dtm_sheets_checked)
+# with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
+#     print(dtm_sheets_checked)
 
 # Batch up land parcels into smaller chunks for processing
 parcelBatchCreation(stocking_fields, 50000, "ID", 29902, output_path)
 
-## ADDITIONAL PROCESSING DONE FOLLOWING DECISION TO ALSO CHECK PEATLAND OVERLAPS WITH LPIS FIELDS CONTAINING NO LIVESTOCK - 22/09/26
-# This uses "O:\\EAT\\Ecosystems Analysis\\BALLUNI\\CBA Analysis\\Outputs\\LPIS_Fields_no_stocking.csv" to filter the LPIS field data gpkg, not the Geoparquet containing livestock data from DSD
-# This subset of parcels is then run through the extraction process again before being analysed back in the balunni_anlaysis.py script. 
-
-# Subset lfa dataset to get those missing from the stocking dataset - Need to do this for the raw parcel dataset itself? But we want the LFA designation so probably best to include his already
+# Subset lfa dataset to get those missing from the stocking dataset, then use this list to filter the spatial dataset as we want to include only parcels which we have LFA data for. 
 lfa_not_in_stocking = (lfa_fields.loc[
     ~lfa_fields["FieldNo"].isin(stocking_fields["field_id_code"])
 ].drop_duplicates(subset=["FieldNo"]))
