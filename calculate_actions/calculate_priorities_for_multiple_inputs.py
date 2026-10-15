@@ -85,11 +85,11 @@ def main(polygonPath: str,
         priorityScores = extractPriorityScoresForInputPolygons(Path(polygonPath), priorityLayers, polygonIdColumn)
         priorityScores.to_csv(finalPriorityScorePath, index=True, index_label='id')
         
-        (wallTime, processTime) = endTimers(startWallTime, startProcessTime, 1)
-        logging.info('---------------------------- Priority Score Extraction Complete ---------------------------- ')
-        logging.info(f'Wall Time: {wallTime} seconds')
-        logging.info(f'Process Time: {processTime} seconds')
-        logging.info(priorityScores, extra={'simple': True})
+    (wallTime, processTime) = endTimers(startWallTime, startProcessTime, 1)
+    logging.info('---------------------------- Priority Score Extraction Complete ---------------------------- ')
+    logging.info(f'Wall Time: {wallTime} seconds')
+    logging.info(f'Process Time: {processTime} seconds')
+    logging.info(priorityScores, extra={'simple': True})
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate action scores for a set of input polygons using priority scores, eligibility options and a QEIA matrix')
