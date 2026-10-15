@@ -23,9 +23,9 @@ def main(polygonPath: str,
          overridePriorityScorePath: str,
          outputPath: str,
          runName: str):
-    '''Process a a set of input polygons through to MCDA, using weighted priority scores, eligible option layers and 
-    an input QEIA matrix, function will output several intermediate CSV files during the process to help with rerunning
-    the script with different options or pre-constructed inputs.
+    '''Process a set of input polygons by extracting values from a series of 'priority' layers that overlap the input polygons.
+    This can be used to extract % overlaps of different classes within layers or single scores from those layers using a range of statistics (e.g. mean/max)
+    Output is a csv containing polygon IDs and statistics for each input layer in long format. 
 
     Args:
         polygonPath (str): Path to vector input file containing the input polygons, should support most vector formats
