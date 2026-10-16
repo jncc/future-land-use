@@ -273,7 +273,7 @@ The system will also accept precalculated eligiblity option files in parquet for
 The options for output file naming and paths allow you to control where the outputs are stored and what they are named. All output files will be stored in the location specified using `--output-path`. If you specify a `--run-name` this will be appended to the filenames before the file extension, i.e. if you specify a run name of `test1` the MCDA output file will be named `mcda_test1.csv` and all files will be put into a folder of the `run-name` under the path specified by `--output-path`.
 
 ### Extract priority scores for multiple polygons
-The calculate_priorities_for_multiple_inputs.py script can be run if only looking to extract priority scores for layers using a set of polygons. This is the same process as above, but allows an additional boolean argument to be specified to calculate the percentage overlap of a layer with multiple inputs rather than a single numeric value.
+The calculate_priorities_for_multiple_inputs.py script can be run if only looking to extract priority scores for layers using a set of polygons. This is the same process as above, but allows an additional boolean argument to be specified to calculate the percentage overlap of a vector layer with multiple inputs rather than a single numeric value.
 
 ```bash
 python calculate_priorities_for_multiple_inputs.py -i polygons.pkg -l layers.json --calculatepercentages --output-path "path/to/output" --run-name "name_of_run_to_append_to_outputs"
@@ -291,7 +291,7 @@ This will output a CSV with the output to `name_of_run_to_append_to_outputs.csv`
      - Polygon layer:
         - `-c / --polygon-id-column {name}` - [**Optional**] allows user to specify the attribute column name to use as an ID for polygons [Default: NGC]
     - Priority scores:
-         - `calculatepercentages {bool}`- [**Optional**] If included, percentage coverage values will be extracted per class instead of maximum priority score touching parcel
+         - `calculatepercentages {bool}`- [**Optional**] If included, percentage coverage values will be extracted per class instead of maximum priority score touching parcel. This can only be applied to vector layers! The extraction will fail if there are raster layers in the layers.json file
          - `--priority-score-filename {filename}` - [**Optional**] Filename pattern to store output priority score CSV file under [Default: `priority_scores.csv`]
          - `--overwrite-priority-scores / --no-overwrite-priority-scores` - [**Optional**] Overwrite priority score output file if it already exists [Default: False]
          - `--override-priority-score-path {path}` - [**Optional**] Path to override the priority score CSV file to use for writing to / reading from if using precalculated priority scores [Default: None]

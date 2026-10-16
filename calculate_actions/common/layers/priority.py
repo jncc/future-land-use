@@ -127,7 +127,7 @@ class PriorityRasterLayer(RasterLayer, PriorityLayer):
             name (str): A computer friendly name for this layer
             friendlyName (str): A human friendly anme for this layer
             path (Path): The fully path to the vector layer file
-            weighting (float, optional): The weighting for this prioirity layer. Defaults to 1.
+            weighting (float, optional): The weighting for this priority layer. Defaults to 1.
             stat (str, optional): The statistic to calculate in zonal stats for a raster layer. Defaults to max
         """
         RasterLayer.__init__(self, name, friendlyName, path)

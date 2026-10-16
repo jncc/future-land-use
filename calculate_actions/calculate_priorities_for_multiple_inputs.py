@@ -98,7 +98,7 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--layer-config', type=str, required=False, default='layers.json', help='JSON file containing priority and eligibility layers')
     parser.add_argument('--calculatepercentages', required=False, help='If true, percentage coverage values will be extracted per class instead of maximum priority score touching parcel', default=False, action=argparse.BooleanOptionalAction)
     parser.add_argument('--priority-score-filename', type=str, required=False, help='Filename for priority scores table as CSV for this run', default='priority_scores.csv')
-    parser.add_argument('--overwrite-priority-scores', required=False, help='Overwrite existing prioirity scores table if it exists', default=False, action=argparse.BooleanOptionalAction)
+    parser.add_argument('--overwrite-priority-scores', required=False, help='Overwrite existing priority scores table if it exists', default=False, action=argparse.BooleanOptionalAction)
     parser.add_argument('--override-priority-score-path', type=str, required=False, help='Full path to an optional file for priority scores as CSV', default=None)
     parser.add_argument('--output-path', type=str, required=True, help='Base output path to store results in')
     parser.add_argument('--run-name', type=str, required=False, help='Optional run name to append to output file pre suffix', default=None)
