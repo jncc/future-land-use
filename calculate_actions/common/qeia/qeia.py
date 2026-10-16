@@ -40,7 +40,7 @@ class Option:
         if priority in self.priorityModifiers:
             return self.priorityModifiers[priority]
         else:
-            raise ValueError(f'Prioirity "{priority}" does not exist in the current QEIA option')
+            raise ValueError(f'priority "{priority}" does not exist in the current QEIA option')
 
 class QEIAMatrix:
     """Helper class for QEIA Matrixes, stores a dict of string, Option pairs that

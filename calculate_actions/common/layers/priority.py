@@ -2,6 +2,7 @@ from common.layers import RasterLayer, VectorLayer
 from shapely import Polygon
 from pathlib import Path
 import numpy as np
+import geopandas as gpd
 from rasterstats import zonal_stats
 
 class PriorityLayer:
@@ -68,12 +69,57 @@ class PriorityVectorLayer(VectorLayer, PriorityLayer):
         intersectsNotTouches = self.dataTable[intersectingPolygons & ~touchingPolygons]
         return intersectsNotTouches[self.columnName].max()
 
+    def extractClassPercentages(self, polygon: Polygon) -> dict:
+
+        """Calculate the percentage of the input polygon occupied by each score or class in the specified attribute column.
+        
+        Args:
+            polygon (Polygon): A polygon to intersect this layer with
+            columnName (str, optional): The score column to use from the vector layer. Defaults to 'Priority_normalised'.
+        
+        Returns: 
+            dict: {class_name: percent_area}
+        """
+
+        intersectingPolygons = self.dataTable.intersects(polygon)
+        touchingPolygons = self.dataTable.touches(polygon)
+        intersectsNotTouches = self.dataTable[intersectingPolygons & ~touchingPolygons].copy()
+
+        if intersectsNotTouches.empty:
+            return {}
+
+        # Calculate overlap geometry
+        intersectsNotTouches["overlap_geom"] = (
+            intersectsNotTouches.geometry.intersection(polygon)
+        )
+
+        # Calculate overlap area
+        intersectsNotTouches["overlap_area"] = (
+            intersectsNotTouches["overlap_geom"].area
+        )
+
+        polygon_area = polygon.area
+
+        # Sum overlap area by class
+        class_areas = (
+            intersectsNotTouches
+            .groupby(self.columnName)["overlap_area"]
+            .sum()
+        )
+
+        # Convert to percentages
+        class_percentages = (
+            class_areas / polygon_area * 100
+        )
+
+        return class_percentages.to_dict()
+
 class PriorityRasterLayer(RasterLayer, PriorityLayer):
     """Class for Raster based Priority Layers, extends the RasterLayer and PriorityLayer
     classes for functionality and prototyping.
     """
 
-    def __init__(self, name: str, friendlyName: str, path: Path):
+    def __init__(self, name: str, friendlyName: str, path: Path, stat: str = "max"):
         """Initialises the RasterLayer and PriorityLayer superclasses with the supplied
         values
 
@@ -81,14 +127,26 @@ class PriorityRasterLayer(RasterLayer, PriorityLayer):
             name (str): A computer friendly name for this layer
             friendlyName (str): A human friendly anme for this layer
             path (Path): The fully path to the vector layer file
-            weighting (float, optional): The weighting for this prioirity layer. Defaults to 1.
+            weighting (float, optional): The weighting for this priority layer. Defaults to 1.
+            stat (str, optional): The statistic to calculate in zonal stats for a raster layer. Defaults to max
         """
         RasterLayer.__init__(self, name, friendlyName, path)
         PriorityLayer.__init__(self)
 
+        valid_stats = ["count","min","max","mean","sum","std","median","majority","minority","unique","range"]
+
+        if stat not in valid_stats:
+            raise ValueError(
+                f"Unsupported statistic '{stat}'. "
+                f"Must be one of {valid_stats}"
+            )
+
+        self.stat = stat
+        
+
     def extractScore(self, polygon: Polygon) -> np.floating:
         """Calculates the score for this layer interescted with the input Polygon, takes the maximum
-        score value from the input raster via zonal stats
+        score value from the input raster via zonal stats as default, unless user supplies alternative statistic to be calculated
 
         Args:
             polygon (Polygon): A polygon to intersect this layer with
@@ -100,11 +158,11 @@ class PriorityRasterLayer(RasterLayer, PriorityLayer):
         stats = zonal_stats(
             polygon,
             str(self.path),
-            stats=["max"],
+            stats=[self.stat],
         )
 
-        if stats and stats[0] and 'max' in stats[0] and stats[0]['max'] is not None:
-            return np.float64(stats[0]['max'])
+        if stats and stats[0] and self.stat in stats[0] and stats[0][self.stat] is not None:
+            return np.float64(stats[0][self.stat])
         else:
             return np.float64(np.nan)
 
@@ -150,7 +208,8 @@ def processPriorityLayers(priorityLayersConfig: dict[str, dict[str, str]]) -> di
             priorityLayers[layer] = PriorityRasterLayer(
                 layer, 
                 priorityLayersConfig[layer]['layer_name'],
-                Path(priorityLayersConfig[layer]['filepath'])
+                Path(priorityLayersConfig[layer]['filepath']),
+                priorityLayersConfig[layer]['stat']
             )                
 
     return priorityLayers

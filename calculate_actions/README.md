@@ -37,7 +37,7 @@ All layers need to be in the same projection for the scripts to work correctly.
 
 For each prority layer an entry should be added under the `priority_layers` object in the configuation JSON file, this
 can be a vector (i.e. `.gpkg`) or a raster file (i.e. `.tif`). Each needs to have a unqiue ID label and should have a 
-unique `layer_name` and `filepath`.
+unique `layer_name` and `filepath`. An optional `stat` can be specified for raster layers which overrides the default maximum value
 
 Priority layer labels should be in the form of `Priority_{EcosystemServiceGroup}_{Action}` where EcosystemServiceGroup is the
 abbreviated name of the ecosystem service group (i.e. `Biod` for Biodiversity) and Action is the abbreviated name of the action
@@ -271,6 +271,31 @@ python calculate_actions_for_multiple_inputs.py -i polygons.pkg -l layers.json -
 The system will also accept precalculated eligiblity option files in parquet format if the file extension is `.parquet`. NOTE: This only applies to the precalculated input files, all output files will be written as CSV at present.
 
 The options for output file naming and paths allow you to control where the outputs are stored and what they are named. All output files will be stored in the location specified using `--output-path`. If you specify a `--run-name` this will be appended to the filenames before the file extension, i.e. if you specify a run name of `test1` the MCDA output file will be named `mcda_test1.csv` and all files will be put into a folder of the `run-name` under the path specified by `--output-path`.
+
+### Extract priority scores for multiple polygons
+The calculate_priorities_for_multiple_inputs.py script can be run if only looking to extract priority scores for layers using a set of polygons. This is the same process as above, but allows an additional boolean argument to be specified to calculate the percentage overlap of a vector layer with multiple inputs rather than a single numeric value.
+
+```bash
+python calculate_priorities_for_multiple_inputs.py -i polygons.pkg -l layers.json --calculatepercentages --output-path "path/to/output" --run-name "name_of_run_to_append_to_outputs"
+```
+
+This will output a CSV with the output to `name_of_run_to_append_to_outputs.csv`, the full list of inputs are described below;
+
+ - Required inputs:
+    - `-i / --polygon-source {path}` - Path to polygon datasource, ideally a GeoPackage, but should function with any vector format including GeoParquet
+    - `-l / --layer-config {path}` - Path to JSON file containing priority layers to extract from
+    - `--output-path {path}` - Base path to store all output files under [Default: None]
+ - Optional inputs:
+     - Run configuration:
+         - `--run-name {name}` - [**Optional**] Name to append to all output files, if not specified files will be created as specified [Default: None]
+     - Polygon layer:
+        - `-c / --polygon-id-column {name}` - [**Optional**] allows user to specify the attribute column name to use as an ID for polygons [Default: NGC]
+    - Priority scores:
+         - `calculatepercentages {bool}`- [**Optional**] If included, percentage coverage values will be extracted per class instead of maximum priority score touching parcel. This can only be applied to vector layers! The extraction will fail if there are raster layers in the layers.json file
+         - `--priority-score-filename {filename}` - [**Optional**] Filename pattern to store output priority score CSV file under [Default: `priority_scores.csv`]
+         - `--overwrite-priority-scores / --no-overwrite-priority-scores` - [**Optional**] Overwrite priority score output file if it already exists [Default: False]
+         - `--override-priority-score-path {path}` - [**Optional**] Path to override the priority score CSV file to use for writing to / reading from if using precalculated priority scores [Default: None]
+
 
 ## Utility Scripts
 
