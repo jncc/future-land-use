@@ -89,7 +89,6 @@ def main(polygonPath: str,
     logging.info('---------------------------- Priority Score Extraction Complete ---------------------------- ')
     logging.info(f'Wall Time: {wallTime} seconds')
     logging.info(f'Process Time: {processTime} seconds')
-    logging.info(priorityScores, extra={'simple': True})
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate action scores for a set of input polygons using priority scores, eligibility options and a QEIA matrix')
