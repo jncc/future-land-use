@@ -1,7 +1,10 @@
 import pandas as pd
 import numpy as np
 import json
-from common.qeia import QEIAMatrix
+
+import sys
+sys.path.insert(1, '../calculate_actions/common/qeia')
+import qeia
 
 # PART 1: ORIGINAL WEIGHTINGS TESTING ################################################################################################################################
 
@@ -171,22 +174,7 @@ print(dummy_ps)
 qeia_path = dummy_path + "dummy_qeia.json"
 with open(qeia_path, 'r') as f:
     raw_qeia = json.load(f)
-    dummy_qeia = QEIAMatrix(raw_qeia)
-
-# Define createDataFrame function - for some reason this doesn't import with QEIAMatrix?
-def createDataFrame(self) -> pd.DataFrame:
-    # ""Returns a Pandas dataframe representation of this QEIAMatrix
-
-    # Returns:
-    #     pd.DataFrame: A dataframe representation of this QEIAMatrix object
-    # ""
-    row = {}
-    
-    for option in self.options:
-        row[option] = self.options[option].getPriorityModifiers()
-
-    return pd.DataFrame.from_dict(row)
-
+    dummy_qeia = qeia.QEIAMatrix(raw_qeia)
 
 # Convert the dummy QEIA to a dataframe and transpose it to the right orientation
 dummy_qeia = dummy_qeia.createDataFrame().transpose()
