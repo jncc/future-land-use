@@ -201,8 +201,8 @@ if __name__ == '__main__':
         args.polygon_id, 
         args.polygon_wkt, 
         args.layer_config, 
-        args.column_group_config_path, 
         args.weightings_config, 
+        args.column_group_config_path, 
         args.qeia_matrix, 
         args.output_path, 
         args.run_name
