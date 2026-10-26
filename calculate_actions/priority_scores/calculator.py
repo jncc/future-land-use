@@ -82,7 +82,7 @@ def calculateInitialPriorityScoreWeighting(priorityScores: pd.DataFrame) -> pd.D
     priorityScores['serviceSum'] = priorityScores[data_columns].sum(axis=1)
     # Find the maximum possible service sum per parcel and use that for normalisation per parcel
     priorityScores['serviceSum'] = priorityScores.groupby(['id'])['serviceSum'].transform("max")
-    priorityScores = priorityScores.apply(lambda row: row[data_columns] / row['serviceSum'], axis=1).drop(columns=['serviceSum','totalServices'], errors='ignore')
+    priorityScores = priorityScores[data_columns].div(priorityScores['serviceSum'], axis=0).drop(columns=['serviceSum','totalServices'], errors='ignore')
 
     return priorityScores
 
