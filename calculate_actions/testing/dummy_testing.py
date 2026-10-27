@@ -66,6 +66,7 @@ print(alt_pS_out)
 # area)
 print("ALTERNATIVE 2")
 alt_pS_2 = alt_pS
+alt_pS_2.drop(columns=['serviceSum', 'max_serviceSum'], inplace=True) # Drop unneeded service sum columns
 # Get unique services present
 services = list(set([i.split("_")[1] for i in data_columns]))
 print(services)
@@ -86,7 +87,6 @@ for i in services:
 
     print(alt_pS_2)
 
-alt_pS_2.drop(columns=['serviceSum', 'max_serviceSum'], inplace=True)
 print("Weighted per service:")
 print(alt_pS_2)
 
