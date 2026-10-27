@@ -22,7 +22,7 @@ print(data_columns)
 # priorityScores = dummy_ps.apply(lambda row: (1 / row['Active Service Sum']) * row[data_columns], axis=1)
 # print("priorityScores after lambda:")
 # print(priorityScores)
-priorityScores = dummy_ps
+priorityScores = dummy_ps.copy()
 priorityScores['serviceSum'] = priorityScores[data_columns].sum(axis=1)
 print("priorityScores:")
 print(priorityScores)
@@ -31,7 +31,7 @@ print("priorityScores return:")
 print(priorityScores) 
 
 # CoPilot review suggested using div instead of apply here - test this suggestion:
-div_priorityScores = dummy_ps
+div_priorityScores = dummy_ps.copy()
 div_priorityScores['serviceSum'] = div_priorityScores[data_columns].sum(axis=1)
 div_priorityScores = div_priorityScores[data_columns].div(div_priorityScores['serviceSum'], axis=0)
 print("Alternative using div instead of apply:")
@@ -52,7 +52,7 @@ print(priorityScores)
 # in all options per parcel
 # (This only affects the outputs in cases where there has been a lookup with SNH indicators
 # as they are the only ones that will have nulls for some options and priority scores for others)
-alt_pS = dummy_ps
+alt_pS = dummy_ps.copy()
 alt_pS['serviceSum'] = alt_pS[data_columns].sum(axis=1)
 alt_pS['max_serviceSum'] = alt_pS.groupby(['Parcel'])['serviceSum'].transform("max")
 print("Max service sum:")
@@ -65,9 +65,10 @@ print(alt_pS_out)
 # ALTERNATIVE 2: Group the weightings by services (so they sum to 1 within a service
 # area)
 print("ALTERNATIVE 2")
-alt_pS_2 = alt_pS
+alt_pS_2 = alt_pS.copy()
 alt_pS_2.drop(columns=['serviceSum', 'max_serviceSum'], inplace=True) # Drop unneeded service sum columns
 # Get unique services present
+data_columns = alt_pS_2.columns.difference(['Parcel', 'Option', 'Active Service Sum'])
 services = list(set([i.split("_")[1] for i in data_columns]))
 print(services)
 # unique_services = list(set(services))
@@ -101,7 +102,7 @@ print(alt_pS_2)
 # summing services, not indicators
 
 print("ALTERNATIVE 3")
-alt_pS_3 = alt_pS_2
+alt_pS_3 = alt_pS_2.copy()
 alt_pS_3 = alt_pS_3.apply(lambda row: (1 / row['Active Service Sum']) * row[data_columns], axis=1)
 print("1/n(ES) applied:")
 print(alt_pS_3)
@@ -112,8 +113,8 @@ print(alt_pS_3)
 print("ALTERNATIVE 4")
 # zPS/sum(zPS) with parcel weighting fix
 
-alt_pS_4 = alt_pS
-print(alt_pS_4)
+print(dummy_ps)
+alt_pS_4 = alt_pS.copy()
 # Add another column to test df with an inactive service for one of the parcels
 alt_pS_4['Priority_Biod_TestInd'] = [1.0, 1.0, 1.0, float("nan"), float("nan"), float("nan")]
 print("Initial data:")
@@ -147,7 +148,6 @@ for i in services:
     alt_pS_4[service_columns] = alt_pS_4[service_columns].apply(lambda row: multiplier * row)
 
 print(alt_pS_4)
-
 
 ## PART 2: TESTING QEIA DOWNSCALING ######################################################################################################################################################
 print("TESTING: QEIA DOWNSCALING =================================================================================")
