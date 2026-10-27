@@ -110,6 +110,17 @@ print(alt_pS_3)
 # ALTERNATIVE 4: Using Rory's suggestion of multiplying by (1/n(ES))/n(EiS) per service
 # to adjust scores for services with more indicators
 
+# NOTE: there are differences between the test here and that presented in presentations such as
+# "2026-07-16 Deep Dive MCDA weightings", because the approach here uses all services present in
+# the indicator (rather than active services).
+
+# Given the decision was made to not carry on with this method and adjusting to reflect active services
+# (which is the correct interpretation for this method) would require significant changes to the approach,
+# the test below has been left as is but this should be kept in mind when referring back to these tests.
+
+# The fundamental issue with this method (that biodiversity indicators would be significantly downwweighted,
+# as presented in 2026-09-30 MCDA Change Testing) remains the same.
+
 print("ALTERNATIVE 4")
 # zPS/sum(zPS) with parcel weighting fix
 
