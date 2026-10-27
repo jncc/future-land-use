@@ -73,7 +73,7 @@ def calculateInitialPriorityScoreWeighting(priorityScores: pd.DataFrame) -> pd.D
     """Calculate the initial priority score weighting by normalising for each parcel using the maximum priority score per parcel
 
     Args:
-        priorityScores (pd.DataFrame): Dataframe containing the priority scores for each input polygon ID
+        priorityScores (pd.DataFrame): Dataframe containing the priority scores for each input polygon ID, after having been merged with eligibility options and had column aggregation applied
 
     Returns:
         pd.DataFrame: A DataFrame containing the initial priority score weighting
