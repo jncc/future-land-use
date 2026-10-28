@@ -142,6 +142,20 @@ a not assesed or unknown impact value.
 
 From the `calculate_actions` folder
 
+### Conda
+
+**Currently preferred on Windows** A number of the wheels that `pip` depends on under windows are not being distributed
+anymore and to get around the lack of compile environments we suggest using `Conda` package management. The distribution
+was tested using Miniforge and we suggest the use of conda-forge only to avoid licence issues.
+
+```bash
+conda create -n flu -f environment.yml
+conda activate flu
+```
+
+This should work under Windows and Linux environments, will attempt to maintain the pip requirements.txt in tandem with
+the conda environment, but you should assume the conda environment should be the most up to date for development / use.
+
 ### Linux
 
 To create a virtual environment to put dependencies into you can run the following;
