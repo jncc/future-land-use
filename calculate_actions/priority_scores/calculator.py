@@ -70,39 +70,37 @@ def groupColumnAggregation(priorityScores: pd.DataFrame, group: str, eligibleOpt
     return priorityScores.drop(columns=groupColumns, errors='ignore')
 
 def calculateInitialPriorityScoreWeighting(priorityScores: pd.DataFrame) -> pd.DataFrame:
-    """Calculate the initial priority score weighting based on the QEIA matrix and eligibility table
+    """Calculate the initial priority score weighting by normalising for each parcel using the maximum priority score per parcel
 
     Args:
-        priorityScores (pd.DataFrame): Dataframe containing the priority scores for each input polygon ID
+        priorityScores (pd.DataFrame): Dataframe containing the priority scores for each input polygon ID, after having been merged with eligibility options and had column aggregation applied
 
     Returns:
         pd.DataFrame: A DataFrame containing the initial priority score weighting
     """
     data_columns = priorityScores.columns.difference(['id', 'option', 'totalServices'])
-    priorityScores = priorityScores.apply(lambda row: (1 / row['totalServices']) * row[data_columns], axis=1)
-    priorityScores['serviceSum'] = priorityScores[data_columns].sum(axis=1)
+    priorityScores['scoreSum'] = priorityScores[data_columns].sum(axis=1)
+    # Find the maximum possible service sum per parcel and use that for normalisation per parcel
+    priorityScores['scoreSum'] = priorityScores.groupby(['id'])['scoreSum'].transform("max")
+    priorityScores = priorityScores[data_columns].div(priorityScores['scoreSum'], axis=0).drop(columns=['scoreSum','totalServices'], errors='ignore')
 
-    return priorityScores.apply(lambda row: row[data_columns] / row['serviceSum'], axis=1).drop(columns=['serviceSum','totalServices'], errors='ignore')
+    return priorityScores
 
-def calculatePriorityScoreWeighting(priortyScores: pd.DataFrame, weigthings: dict[str, float]) -> pd.DataFrame:
+def calculatePriorityScoreWeighting(priorityScores: pd.DataFrame, weightings: dict[str, float]) -> pd.DataFrame:
     """Calculate the priority score weighting based on the provided weights
 
     Args:
-        priortyScores (pd.DataFrame): Dataframe containing the priority scores for each input polygon ID
-        weigthings (dict[str, float]): A dictionary containing the weights for each priority layer
+        priorityScores (pd.DataFrame): Dataframe containing the priority scores for each input polygon ID
+        weightings (dict[str, float]): A dictionary containing the weights for each priority layer
 
     Returns:
         pd.DataFrame: A DataFrame containing the weighted priority scores
     """
-    for layer, weight in weigthings.items():
-        if layer in priortyScores.columns:
-            priortyScores[layer] *= weight
+
+    for layer, weight in weightings.items():
+        if layer in priorityScores.columns:
+            priorityScores[layer] *= weight
         else:
             raise ValueError(f'Layer {layer} not found in priority scores columns')
 
-    # Normalize the scores to ensure they sum to 1
-    priortyScores['total'] = priortyScores.sum(axis=1)
-    priortyScores = priortyScores.apply(lambda row: row / row['total'], axis=1)
-    priortyScores.drop(columns=['total'], inplace=True)
-
-    return priortyScores
+    return priorityScores
