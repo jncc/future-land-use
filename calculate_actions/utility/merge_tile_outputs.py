@@ -1,7 +1,9 @@
 import argparse
+import csv
 import logging
 from pathlib import Path
 
+import pyarrow as pa
 import pyarrow.csv as pacsv
 import pyarrow.parquet as pq
 
@@ -29,6 +31,17 @@ def main(input_root: str, prefix: str, output_file: str, overwrite: bool) -> int
         logging.error(f'{output_path} already exists; use --overwrite to replace it')
         return 1
 
+    # slightly hacky dynamic inference of column types
+    with tile_paths[0].open(newline='', encoding='utf-8-sig') as source:
+        columns = next(csv.reader(source))
+    column_types = {
+        column: pa.string() if column in {'id', 'option'} else
+        pa.bool_() if 'totalServices' in columns and column != 'totalServices' else
+        pa.float64()
+        for column in columns
+    }
+    convert_options = pacsv.ConvertOptions(column_types=column_types)
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = output_path.with_name(output_path.name + '.tmp')
     writer = None
@@ -36,7 +49,7 @@ def main(input_root: str, prefix: str, output_file: str, overwrite: bool) -> int
     logging.info(f'Merging {len(tile_paths)} files with prefix {prefix} into {output_path}')
     try:
         for path in tile_paths:
-            table = pacsv.read_csv(path)
+            table = pacsv.read_csv(path, convert_options=convert_options)
             if writer is None:
                 if output_format == 'parquet':
                     writer = pq.ParquetWriter(tmp_path, table.schema, compression='zstd')
