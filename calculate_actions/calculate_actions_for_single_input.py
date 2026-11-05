@@ -197,4 +197,13 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    main(args.poly_id, args.polygon_wkt, args.layer_config, args.weightings_config, args.qeia_matrix, args.output)
+    main(
+        args.polygon_id, 
+        args.polygon_wkt, 
+        args.layer_config, 
+        args.weightings_config, 
+        args.column_group_config_path, 
+        args.qeia_matrix, 
+        args.output_path, 
+        args.run_name
+    )
