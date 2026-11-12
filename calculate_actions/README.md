@@ -6,9 +6,7 @@ A set of scripts to calculate the priority and eligible actions for given polygo
 
 ### Layer Config
 
-There is a template file for layer configuration `layers.json.template`, this contains configuration and file paths to 
-data layers used by this tool. The file will be split into two main sections, priority_layers andeligibility_layers in 
-the form:
+There is a template file for layer configuration `layers.json.template`, this contains configuration and file paths to data layers used by this tool. The file will be split into two main sections, priority_layers and eligibility_layers in the form:
 
 ```json
 {
@@ -35,27 +33,19 @@ All layers need to be in the same projection for the scripts to work correctly.
 
 #### Priority Layers
 
-For each prority layer an entry should be added under the `priority_layers` object in the configuation JSON file, this
-can be a vector (i.e. `.gpkg`) or a raster file (i.e. `.tif`). Each needs to have a unqiue ID label and should have a 
-unique `layer_name` and `filepath`.
+For each prority layer an entry should be added under the `priority_layers` object in the configuation JSON  file, this can be a vector (i.e. `.gpkg`) or a raster file (i.e. `.tif`). Each needs to have a unqiue ID label and should have a unique `layer_name` and `filepath`.
 
-Priority layer labels should be in the form of `Priority_{EcosystemServiceGroup}_{Action}` where EcosystemServiceGroup is the
-abbreviated name of the ecosystem service group (i.e. `Biod` for Biodiversity) and Action is the abbreviated name of the action
-(i.e. `MaintainSNH` for Maintain Semi-Natural Habitats).
+Priority layer labels should be in the form of `Priority_{EcosystemServiceGroup}_{Action}` where EcosystemServiceGroup is the abbreviated name of the ecosystem service group (i.e. `Biod` for Biodiversity) and Action is the abbreviated name of the action (i.e. `MaintainSNH` for Maintain Semi-Natural Habitats).
 
 #### Eligibility Layers
 
-For each prority layer an entry should be added under the `priority_layers` object in the configuation JSON file, this
-can be a vector (i.e. `.gpkg`), currently raster eligibilty layers are not supported. Each needs to have a unqiue ID 
-label and should have a unique `layer_name` and `filepath`.
+For each priority layer an entry should be added under the `priority_layers` object in the configuration JSON file, this can be a vector (i.e. `.gpkg`), currently raster eligibilty layers are not supported. Each needs to have a unique ID label and should have a unique `layer_name` and `filepath`.
 
-Eligibility layer labels currently do not have a specific format, but should be short, unique and descriptive of the layer, i.e.
-`GS6`, `LH1`, `SW17`, `SW18` etc.
+Eligibility layer labels currently do not have a specific format, but should be short, unique and descriptive of the layer, i.e. `GS6`, `LH1`, `SW17`, `SW18` etc.
 
 ### Column Aggregation
 
-There are some priority layers that should be aggregated together to prevent them from There is a template file for column aggregation `column_aggregation.json.template`, this contains an example of how to 
-aggregate the values of the priority layers for each polygon, this is in the form:
+There are some priority layers that should be aggregated together to prevent them from There is a template file for column aggregation `column_aggregation.json.template`, this contains an example of how to aggregate the values of the priority layers for each polygon, this is in the form:
 
 ```json
 {
@@ -75,12 +65,9 @@ aggregate the values of the priority layers for each polygon, this is in the for
 }
 ```
 
-Where each line the `priority_layer_group_label` matches an entry in the pattern for a group of priority layers  in the config 
-file described above.
+Where each line the `priority_layer_group_label` matches an entry in the pattern for a group of priority layers in the config file described above.
 
-For example if you have a group of priority layers that are all related to maintainging semi-natural habitats, you could have a 
-group label of `Priority_Biod_MaintainSNH` (`Biod` being the ecosystem service group, `MaintainSNH` being the action) and then have a
-set of Priority Layers such as `Priority_Biod_MaintainSNH_LCG`, `Priority_Biod_MaintainSNH_BBG` etc. which could present as;
+For example if you have a group of priority layers that are all related to maintaining semi-natural habitats, you could have a group label of `Priority_Biod_MaintainSNH` (`Biod` being the ecosystem service group, `MaintainSNH` being the action) and then have a set of Priority Layers such as `Priority_Biod_MaintainSNH_LCG`, `Priority_Biod_MaintainSNH_BBG` etc. which could present as;
 
 ```json
 {
@@ -104,8 +91,7 @@ The `operation` can be one of `MAX`, `MIN`, `AVG` more operations may be added i
 
 ### Weightings
 
-There is a template file for layer configuration `weightings.json.template`, this contains weightings that will be applied
-to the extracted priority scores for each input polygon in the form:
+There is a template file for layer configuration `weightings.json.template`, this contains weightings that will be applied to the extracted priority scores for each input polygon in the form:
 
 ```json
     {
@@ -118,7 +104,7 @@ Where each line the `priority_layer_label` matches an entry in the Priority Laye
 
 ### QEIA matrix
 
-This is a transformative matrix that defines the modifier to use for each eligible option for each polygon, there is 
+This is a transformative matrix that defines the modifier to use for each eligible option for each priority layer, there is 
 a template example at `qeia.json.template` where data is of the form:
 
 ```json
@@ -132,11 +118,9 @@ a template example at `qeia.json.template` where data is of the form:
 
 ```
 
-Where the `eligibility_layer_label` matches an entry in the Eligibility section of the Layers config file defined above
-and `priority_layer_label` matches an entry in Priority Layer section of the Layers config file.
+Where the `eligibility_layer_label` matches an entry in the Eligibility section of the Layers config file defined above and `priority_layer_label` matches an entry in Priority Layer section of the Layers config file.
 
-The value should be an integer between -3 and 3 (this is not enfored at present), it also support `null` values to indicate
-a not assesed or unknown impact value.
+The value should be an integer between -3 and 3 (this is not enforced at present), it also supports `null` values to indicate a not assesed or unknown impact value.
 
 ## Create local virtual environment
 
@@ -144,17 +128,14 @@ From the `calculate_actions` folder
 
 ### Conda
 
-**Currently preferred on Windows** A number of the wheels that `pip` depends on under windows are not being distributed
-anymore and to get around the lack of compile environments we suggest using `Conda` package management. The distribution
-was tested using Miniforge and we suggest the use of conda-forge only to avoid licence issues.
+**Currently preferred on Windows** A number of the wheels that `pip` depends on under windows are not being distributed anymore and to get around the lack of compile environments we suggest using `Conda` package management. The distribution was tested using Miniforge and we suggest the use of conda-forge only to avoid licence issues.
 
 ```bash
 conda create -n flu -f environment.yml
 conda activate flu
 ```
 
-This should work under Windows and Linux environments, will attempt to maintain the pip requirements.txt in tandem with
-the conda environment, but you should assume the conda environment should be the most up to date for development / use.
+This should work under Windows and Linux environments, will attempt to maintain the pip requirements.txt in tandem with the conda environment, but you should assume the conda environment should be the most up to date for development / use.
 
 ### Linux
 
@@ -191,8 +172,7 @@ python -m pip install -r requirements.txt
 
 To leave the virtual environment close the window or use `deactivate`
 
-**NOTE**: You can potentially run this via powershell, but frequently system admins will lock down running powershell 
-scripts (`activate.ps1`).
+**NOTE**: You can potentially run this via powershell, but frequently system admins will lock down running powershell scripts (`activate.ps1`).
 
 ## Process single polygon
 
@@ -209,9 +189,7 @@ python calculate_actions_for_single_input.py -i 1234567 -p 1234567.wkt -l layers
  - `-q / --qeia_matrix` - Path to JSON file containing QEIA matrix
  - `-o / --output` - (Optional) Path to store MCDA output to as a `.csv` file
 
-This script is designed to run a single polygon through the relevant steps to provide an output
-for testing or validation purposes. By default the script will print out a representation of the data
-but the output can be saved to a file using the `-o` switch.
+This script is designed to run a single polygon through the relevant steps to provide an output for testing or validation purposes. By default the script will print out a representation of the data but the output can be saved to a file using the `-o` switch.
 
 ## Process multiple polygons
 
@@ -243,9 +221,9 @@ This will output a CSV with the MCDA output to `mcda.csv` as well as intermediat
         - `--use-precalculated-weighted-priority-scores / --no-use-precalculated-weighted-priority-scores` - [**Optional**] Use precalculated weighted priority scores, uses the existing filename for this run or the override file if specified [Default: False]
         - `--weighted-priority-score-filename {filename}` - [**Optional**] Filename pattern to store calculated weighted priority scores out to as CSV [Default: `weighted_priority_scores.csv`]
         - `--overwrite-weighted-priority-scores / --no-overwrite-weighted-priority-scores` - [**Optional**] Overwrite weighted priority score output if it exists [Default: False]
-        - `override-weighted-priority-score-path {path}` - [**Optional**] Path to override the weighted priority score CSV file to use for writing to / reading from if using precalculated weighted priority scores [Default: None]
+        - `--override-weighted-priority-score-path {path}` - [**Optional**] Path to override the weighted priority score CSV file to use for writing to / reading from if using precalculated weighted priority scores [Default: None]
     - Active services matrix:
-         - `active-services-matrix-filename {path}` - [**Optional**] Path to CSV containing active services matrix to filter priority layers by [Default: None]
+         - `--active-services-matrix-filename {path}` - [**Optional**] Path to CSV containing active services matrix to filter priority layers by [Default: None]
          - `--write-active-services-matrix / --no-write-active-services-matrix` - [**Optional**] Write active services matrix to file at the path specified above [Default: False]
          - `--override-active-services-matrix-path' {path}` - [**Optional**] Path to override the active services matrix CSV file to use for writing to / reading from if using precalculated active services matrix [Default: None]
      - Eligibility:
@@ -303,8 +281,7 @@ OPT1,TRUE,FALSE,FALSE,...
 OPT2,FALSE,TRUE,FALSE,...
 OPT3,FALSE,FALSE,TRUE,...
 ```
-In this example, `ASN`, `BLB`, and `LCG` are the priority layers options and `OPT1`, `OPT2`, and `OPT3` are the eligibility options. The output will be a JSON object with the aggregation configuration 
-for each option.
+In this example, `ASN`, `BLB`, and `LCG` are the priority layers options and `OPT1`, `OPT2`, and `OPT3` are the eligibility options. The output will be a JSON object with the aggregation configuration for each option.
 
 i.e.
 
@@ -395,8 +372,7 @@ python utility/generate_random_qeia_matrix.py -l layers.json -o qeia.json --min_
 
 ### Pregenerated Eligibility Options (Force True)
 
-Run the utiltity script `utility/generate_true_eligibility_table.py` to pre generate an options
-eligbility table where all polygons are fored to be eligible for all options.
+Run the utiltity script `utility/generate_true_eligibility_table.py` to pre generate an options eligbility table where all polygons are fored to be eligible for all options.
 
 ```bash
 python utility/generate_true_eligibility_table.py -i polygons.gpkg -c id_column -l layers.json -o eligibility.csv

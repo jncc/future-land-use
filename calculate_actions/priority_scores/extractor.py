@@ -77,31 +77,32 @@ class Calculator:
 
         return df
     
-def extractPriorityScoresForInputPolygon(polygonId: str, polygon: Polygon, prioirityLayers: dict[str, PriorityLayer]) -> pd.DataFrame:
+def extractPriorityScoresForInputPolygon(polygonId: str, polygon: Polygon, priorityLayers: dict[str, PriorityLayer]) -> pd.DataFrame:
     """Calculate the priority scores for the input polygon, using the provided priority layers
 
     Args:
         polygonId (str): A unique identifier for the input polygon
         polygon (Polygon): The input polygon to calculate the priority scores for
-        prioirityLayers (dict[str, PriorityLayer]): A dictionary containing the priority layers to use in the calculation
+        priorityLayers (dict[str, PriorityLayer]): A dictionary containing the priority layers to use in the calculation
 
     Returns:
         pd.DataFrame: A DataFrame containing the priority scores for the input polygon
     """
-    priorityCalculator = Calculator(prioirityLayers)
-    inputPriorityScores = pd.DataFrame(columns=prioirityLayers.keys())
+    priorityCalculator = Calculator(priorityLayers)
+    inputPriorityScores = pd.DataFrame(columns=priorityLayers.keys())
     inputPriorityScores.index.name = 'id'
 
     inputPriorityScores.loc[polygonId] = priorityCalculator.extractPriorityScoreForPolygonAsArray(polygon, False)
 
     return inputPriorityScores
 
-def extractPriorityScoresForInputPolygons(polygonSource: Path, prioirityLayers: dict[str, PriorityLayer], polygonIdColumn: str) -> pd.DataFrame:
+def extractPriorityScoresForInputPolygons(polygonSource: Path, priorityLayers: dict[str, PriorityLayer], polygonIdColumn: str) -> pd.DataFrame:
     """Calculate the priority scores for the input polygon, using the provided priority layers
 
     Args:
-        polygonSource (Path): A path to a WKT file containing the input polygon
-        prioirityLayers (dict[str, PriorityLayer]): A dictionary containing the priority layers to use in the calculation
+        polygonSource (Path): A path to a parquet or GeoPandas compatible GIS file containing the input polygons
+        priorityLayers (dict[str, PriorityLayer]): A dictionary containing the priority layers to use in the calculation
+        polygonIdColumn (str): The name of the column containing the unique identifier for each input polygon
 
     Returns:
         pd.DataFrame: A DataFrame containing the priority scores for the input polygon
@@ -110,8 +111,8 @@ def extractPriorityScoresForInputPolygons(polygonSource: Path, prioirityLayers: 
         inputParcels = gpd.read_parquet(polygonSource)
     else:
         inputParcels = gpd.read_file(polygonSource)
-    priorityCalculator = Calculator(prioirityLayers)
-    inputPriorityScores = pd.DataFrame(columns=prioirityLayers.keys())
+    priorityCalculator = Calculator(priorityLayers)
+    inputPriorityScores = pd.DataFrame(columns=priorityLayers.keys())
     inputPriorityScores.index.name = 'id'
 
     for parcel in inputParcels.iterrows():

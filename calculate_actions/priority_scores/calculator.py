@@ -37,6 +37,7 @@ def groupColumnAggregation(priorityScores: pd.DataFrame, group: str, eligibleOpt
         priorityScores (pd.DataFrame): Dataframe containing the priority scores for each input polygon ID
         group (str): The group to aggregate the priority scores for
         eligibleOptions (dict[str, list[str]]): A list of eligible options for each option set
+        operation (str, optional): The aggregation operation to apply, can be 'MAX', 'MIN', or 'AVG'. Defaults to 'MAX'.
 
     Returns:
         pd.DataFrame: A DataFrame containing the aggregated priority scores for the specified group

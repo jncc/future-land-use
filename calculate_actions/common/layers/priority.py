@@ -57,7 +57,6 @@ class PriorityVectorLayer(VectorLayer, PriorityLayer):
 
         Args:
             polygon (Polygon): A polygon to intersect this layer with
-            columnName (str, optional): The score column to use from the vector layer. Defaults to 'Priority_normalised'.
 
         Returns:
             np.floating: The maximum score for this layer intersected with the input polygon
@@ -79,9 +78,8 @@ class PriorityRasterLayer(RasterLayer, PriorityLayer):
 
         Args:
             name (str): A computer friendly name for this layer
-            friendlyName (str): A human friendly anme for this layer
-            path (Path): The fully path to the vector layer file
-            weighting (float, optional): The weighting for this prioirity layer. Defaults to 1.
+            friendlyName (str): A human friendly name for this layer
+            path (Path): The path to the vector layer file
         """
         RasterLayer.__init__(self, name, friendlyName, path)
         PriorityLayer.__init__(self)
@@ -111,12 +109,13 @@ class PriorityRasterLayer(RasterLayer, PriorityLayer):
 
 def processPriorityLayers(priorityLayersConfig: dict[str, dict[str, str]]) -> dict[str, PriorityLayer]:
     """Process and open a list of priority layers, as vector or raster layers as appropriate,
-    currently only vector layers are supported, inputs should be of the form;
+    inputs should be of the form;
     {
         "drought": {
             "layer_name": "Drought",
-            "filename": "Drought.gpkg",
-            "weighting": 1.23
+            "filepath": "Drought.gpkg",
+            "type": "vector",
+            "column_name": "Priority_normalised"
         },
         ...
     }
