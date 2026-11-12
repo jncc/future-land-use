@@ -131,8 +131,6 @@ def main(polygonPath: str,
         finalMcdaPath = finalOutputPath.joinpath(get_output_filename(mcdaFilename, runName))
         logging.info(f'Using MCDA path at {finalMcdaPath}')
     
-    (totalStartWallTime, totalStartProcessTime) = startTimers()
-    
     with open(qeiaMatrix) as f:
         config = json.load(f)
         rawQeia = QEIAMatrix(config)
@@ -142,15 +140,12 @@ def main(polygonPath: str,
     with open(layerConfig) as f:
         config = json.load(f)
 
-    (procStartWallTime, procStartProcessTime) = startTimers()
-
     if usePrecalculatedWeightedPriorityScores and finalWeightedPriorityScorePath.exists():
         logging.info('Pre-calculated weighted priority scores found, skipping priority score calculation')
         logging.info('Reading pre-calculated weighted priority scores')
         weightedPriorityScores = pd.read_csv(finalWeightedPriorityScorePath)
         weightedPriorityScores.set_index(['id','option'], inplace=True)
     else:
-        (startWallTime, startProcessTime) = startTimers()
         if usePrecalculatedPriorityScores and finalPriorityScorePath.exists():
             logging.info('Reading pre-calculated priority scores')
             priorityScores = pd.read_csv(finalPriorityScorePath)
@@ -170,16 +165,8 @@ def main(polygonPath: str,
             logging.info('Calculate priority scores')
             priorityScores = extractPriorityScoresForInputPolygons(Path(polygonPath), priorityLayers, polygonIdColumn)
             priorityScores.to_csv(finalPriorityScorePath, index=True, index_label='id')
-        
-        (wallTime, processTime) = endTimers(startWallTime, startProcessTime, 1)
-        logging.info('---------------------------- Priority Score Extraction Complete ---------------------------- ')
-        logging.info(f'Wall Time: {wallTime} seconds')
-        logging.info(f'Process Time: {processTime} seconds')
-        logging.info(priorityScores, extra={'simple': True})
 
-        (startWallTime, startProcessTime) = startTimers()
         logging.info('Calculating active services from priority scores')
-
         activeServicesMatrix = calculateActiveServices(priorityScores)
         
         if writeActiveServicesMatrix:
@@ -188,9 +175,6 @@ def main(polygonPath: str,
         activeServicesMatrix.drop(activeServicesMatrix.columns.difference(['id', 'totalServices']), axis=1, inplace=True)
 
         priorityScores = priorityScores.merge(activeServicesMatrix, on='id', how='left')
-        logging.info('---------------------------- Active Services Calculation Complete ---------------------------- ')
-        logging.info(f'Wall Time: {wallTime} seconds')
-        logging.info(f'Process Time: {processTime} seconds')
 
         if usePrecalcalculatedEligibilityOptions and finalEligibilityOptionsPath.exists():
             logging.info('Reading pre-calculated eligibility options')
@@ -225,22 +209,13 @@ def main(polygonPath: str,
 
             eligibilityLayers: dict[str, EligibilityLayer] = {}
             eligibilityLayers = processEligibilityLayers(config['eligibility_layers'])
-            
-            (startWallTime, startProcessTime) = startTimers()
 
             optionEligbility = calculateOptionEligibilityForInputPolygons(Path(polygonPath), eligibilityLayers)
             optionEligbility.to_csv(finalEligibilityOptionsPath, index=True, index_label='id')
             
-            (wallTime, processTime) = endTimers(startWallTime, startProcessTime, 1)
-            
-            logging.info('---------------------------- Eligibility Discovery Complete ---------------------------- ')
-            logging.info(f'Wall Time: {wallTime} seconds')
-            logging.info(f'Process Time: {processTime} seconds')
-        logging.info(optionEligbility, extra={'simple': True})
 
         mergedPriorityScores = mergeEligibilityOptions(priorityScores, optionEligbility)
 
-        (startWallTime, startProcessTime) = startTimers()
         logging.info('Aggregating group columns in priority scores')
 
         if columnGroupConfigPath:
@@ -254,22 +229,11 @@ def main(polygonPath: str,
         
         logging.info(mergedPriorityScores, extra={'simple': True})
 
-        logging.info('---------------------------- Column Group Aggregation Complete ---------------------------- ')
-        logging.info(f'Wall Time: {wallTime} seconds')
-        logging.info(f'Process Time: {processTime} seconds')
-
-        (startWallTime, startProcessTime) = startTimers()
         logging.info('Initial Priority Score Weighting')
 
         weightedPriorityScores = calculateInitialPriorityScoreWeighting(mergedPriorityScores)
-        logging.info(weightedPriorityScores, extra={'simple': True})
-
-        logging.info('---------------------------- Initial Priority Score Weighting Complete ---------------------------- ')
-        logging.info(f'Wall Time: {wallTime} seconds')
-        logging.info(f'Process Time: {processTime} seconds')
 
         logging.info('Calculating weighted priority scores')
-        (startWallTime, startProcessTime) = startTimers()
 
         if (Path(finalWeightedPriorityScorePath).exists()):
             if overwriteWeightedPriorityScores:
@@ -285,14 +249,9 @@ def main(polygonPath: str,
 
         weightedPriorityScores = calculatePriorityScoreWeighting(weightedPriorityScores, weightings)
         weightedPriorityScores.to_csv(finalWeightedPriorityScorePath)
-        logging.info(weightedPriorityScores, extra={'simple': True})
         
-        logging.info('---------------------------- Priority Score Weighting Complete ---------------------------- ')
-        logging.info(f'Wall Time: {wallTime} seconds')
-        logging.info(f'Process Time: {processTime} seconds')
 
     logging.info('Calculate action scores using priorities and QEIA')
-    (startWallTime, startProcessTime) = startTimers()
     mcda = calculateMCDAForPriorityScoresWithEligibility(weightedPriorityScores, rawQeia)
 
     if Path(finalMcdaPath).exists() and not overwriteMcda:
@@ -301,20 +260,6 @@ def main(polygonPath: str,
     
     mcda.to_csv(finalMcdaPath)
 
-    (wallTime, processTime) = endTimers(startWallTime, startProcessTime)
-    logging.info(mcda, extra={'simple': True})
-    logging.info(f'Wall Time: {wallTime} milliseconds')
-    logging.info(f'Process Time: {processTime} milliseconds')
-
-    (wallTime, processTime) = endTimers(procStartWallTime, procStartProcessTime, 1)
-    logging.info('---------------------------- Processing Complete ---------------------------- ')
-    logging.info(f'Wall Time: {wallTime} seconds')
-    logging.info(f'Process Time: {processTime} seconds')
-
-    (wallTime, processTime) = endTimers(totalStartWallTime, totalStartProcessTime, 1)
-    logging.info('---------------------------- Execution Complete ---------------------------- ')
-    logging.info(f'Wall Time: {wallTime} seconds')
-    logging.info(f'Process Time: {processTime} seconds')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate action scores for a set of input polygons using priority scores, eligibility options and a QEIA matrix')
