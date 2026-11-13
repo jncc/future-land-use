@@ -136,7 +136,6 @@ def main(polygonPath: str,
                 if overwritePriorityScores:
                     logging.warning(f'Output path {finalPriorityScorePath} already exists, overwriting')
                 else:
-                    logging.warning(f'Output path {finalPriorityScorePath} already exists, exiting')
                     raise FileExistsError(f'Output path {finalPriorityScorePath} already exists, use --overwrite-priority-scores to overwrite')
             
             priorityLayers: dict[str, PriorityLayer] = {}
@@ -154,12 +153,12 @@ def main(polygonPath: str,
             activeServicesMatrix.to_csv(finalActiveServicesMatrixPath, index=True, index_label='id')
             
         activeServicesMatrix.drop(activeServicesMatrix.columns.difference(['id', 'totalServices']), axis=1, inplace=True)
-        priorityScores = priorityScores.merge(activeServicesMatrix, on='id', how='left')
+        mergedPriorityScores = priorityScores.merge(activeServicesMatrix, on='id', how='left')
 
         if eligibilityOptionsPath:
-            logging.info('Reading eligibility options and converting to boolean')
+            logging.info('Reading eligibility options')
             if Path(eligibilityOptionsPath).suffix == '.parquet':
-                logging.info('Eligibility options is in parquet format, reading as such assuming RPA input')
+                logging.info('Eligibility options in parquet format, reading as such assuming RPA input')
                 optionEligbilityAreas = pd.read_parquet(eligibilityOptionsPath)
                 optionEligbilityAreas.set_index('id_parcel', inplace=True)
                 # Convert to boolean options if not already
@@ -170,9 +169,7 @@ def main(polygonPath: str,
                 optionEligbilityAreas.set_index('id_parcel', inplace=True)
                 optionEligbility = optionEligbilityAreas.map(lambda x: False if np.isnan(x) else bool(x))
 
-            mergedPriorityScores = mergeEligibilityOptions(priorityScores, optionEligbility)
-        else:
-            mergedPriorityScores = priorityScores
+            mergedPriorityScores = mergeEligibilityOptions(mergedPriorityScores, optionEligbility)
 
         logging.info('Aggregating group columns in priority scores')
         if columnGroupConfigPath:
@@ -191,7 +188,6 @@ def main(polygonPath: str,
             if overwriteWeightedPriorityScores:
                 logging.warning(f'Output path {finalWeightedPriorityScorePath} already exists, overwriting')
             else:
-                logging.warning(f'Output path {finalWeightedPriorityScorePath} already exists, exiting')
                 raise FileExistsError(f'Output path {finalWeightedPriorityScorePath} already exists, use --overwrite-weighted-priority-scores to overwrite')
 
         with open(weightingsConfig) as f:

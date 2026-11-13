@@ -6,7 +6,34 @@ A set of scripts to calculate the priority and eligible actions for given polygo
 
 ### Layer Config
 
-There is a template file for layer configuration `layers.json.template`, this contains configuration and file paths to data layers used by this tool. The file will be split into two main sections, priority_layers and eligibility_layers in the form:
+There is a template file for layer configuration `layers.json.template`, this contains configuration and file paths to data layers used by this tool.
+
+```json
+{
+    "priority_layers": {
+        "unique_layer_id": {
+            "layer_name": "Human friendly name",
+            "filepath": "path/to/file.ext",
+            "type": "vector"  // or "raster" for raster files
+        },
+        ...
+    }
+}
+```
+
+All layers need to be in the same projection for the scripts to work correctly.
+
+#### Priority Layers
+
+For each prority layer an entry should be added under the `priority_layers` object in the configuation JSON  file, this can be a vector (i.e. `.gpkg`) or a raster file (i.e. `.tif`). Each needs to have a unique ID label and should have a unique `layer_name` and `filepath`.
+
+Priority layer labels should be in the form of `Priority_{EcosystemServiceGroup}_{Action}` where EcosystemServiceGroup is the abbreviated name of the ecosystem service group (i.e. `Biod` for Biodiversity) and Action is the abbreviated name of the action (i.e. `MaintainSNH` for Maintain Semi-Natural Habitats).
+
+#### Eligibility Layers
+
+If you have eligibility layers, you can also configure them here and then use the `utility/generate_eligibility_options.py` script to process them into an eligiblity options CSV file.
+
+For each eligibility layer an entry should be added under the `eligibility_layers` object in the configuration JSON file, this can be a vector (i.e. `.gpkg`), currently raster eligibilty layers are not supported. Each needs to have a unique ID label and should have a unique `layer_name` and `filepath`.
 
 ```json
 {
@@ -29,23 +56,11 @@ There is a template file for layer configuration `layers.json.template`, this co
 }
 ```
 
-All layers need to be in the same projection for the scripts to work correctly.
-
-#### Priority Layers
-
-For each prority layer an entry should be added under the `priority_layers` object in the configuation JSON  file, this can be a vector (i.e. `.gpkg`) or a raster file (i.e. `.tif`). Each needs to have a unqiue ID label and should have a unique `layer_name` and `filepath`.
-
-Priority layer labels should be in the form of `Priority_{EcosystemServiceGroup}_{Action}` where EcosystemServiceGroup is the abbreviated name of the ecosystem service group (i.e. `Biod` for Biodiversity) and Action is the abbreviated name of the action (i.e. `MaintainSNH` for Maintain Semi-Natural Habitats).
-
-#### Eligibility Layers
-
-For each priority layer an entry should be added under the `priority_layers` object in the configuration JSON file, this can be a vector (i.e. `.gpkg`), currently raster eligibilty layers are not supported. Each needs to have a unique ID label and should have a unique `layer_name` and `filepath`.
-
 Eligibility layer labels currently do not have a specific format, but should be short, unique and descriptive of the layer, i.e. `GS6`, `LH1`, `SW17`, `SW18` etc.
 
 ### Column Aggregation
 
-There are some priority layers that should be aggregated together to prevent them from There is a template file for column aggregation `column_aggregation.json.template`, this contains an example of how to aggregate the values of the priority layers for each polygon, this is in the form:
+Some priority layer scores need to be aggregated before being used for the MCDA calculation. There is a template file for column aggregation `column_aggregation.json.template`, this contains an example of how to aggregate the values of the priority layers for each polygon, this is in the form:
 
 ```json
 {
@@ -86,8 +101,7 @@ For example if you have a group of priority layers that are all related to maint
 }
 ```
 
-The `operation` can be one of `MAX`, `MIN`, `AVG` more operations may be added in the future, but the commonly used one is currently 
-`MAX` to get the maximum value for each polygon across the priority layers in the group.
+The `operation` can be one of `MAX`, `MIN`, `AVG`. More operations may be added in the future, but the commonly used one is currently `MAX` to get the maximum value for each polygon across the priority layers in the group.
 
 ### Weightings
 

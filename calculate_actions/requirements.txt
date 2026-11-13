@@ -9,10 +9,10 @@ geopandas==1.0.1
 numpy==2.2.2
 packaging==24.2
 pandas==2.2.3
-pyarrow==20.0.0
+pyarrow==22.0.0
 pyogrio==0.10.0
 pyparsing==3.2.1
-pyproj==3.7.0
+pyproj==3.7.2
 python-dateutil==2.9.0.post0
 pytz==2025.1
 rasterio==1.4.3

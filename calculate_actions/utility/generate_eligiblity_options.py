@@ -20,8 +20,7 @@ def main(polygonPath: str,
         if overwriteEligibilityOptions:
             logging.warning(f'Output path {eligibilityOptionsPath} already exists, overwriting')
         else:
-            logging.warning(f'Output path {eligibilityOptionsPath} already exists, exiting')
-            raise FileExistsError(f'Output path {eligibilityOptionsPath} already exists')
+            raise FileExistsError(f'Output path {eligibilityOptionsPath} already exists, use --overwrite-eligibility-options to overwrite')
 
     logging.info('Processing eligibility layers')
 
