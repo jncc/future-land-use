@@ -188,24 +188,7 @@ To leave the virtual environment close the window or use `deactivate`
 
 **NOTE**: You can potentially run this via powershell, but frequently system admins will lock down running powershell scripts (`activate.ps1`).
 
-## Process single polygon
-
-To run locally with a single polygon, enter the virtual environment you created and run the script;
-
-```bash
-python calculate_actions_for_single_input.py -i 1234567 -p 1234567.wkt -l layers.json -w weighting.json -q qeia.json
-```
-
- - `-i / --polyid` - Unique ID for the polygon
- - `-p / --polygon_wkt` - Path to WKT file containing polygon geometry
- - `-l / --layer_config` - Path to JSON file containing priority and eligibility layers
- - `-w / --weightings_config`- Path to JSON file containing priority weightings
- - `-q / --qeia_matrix` - Path to JSON file containing QEIA matrix
- - `-o / --output` - (Optional) Path to store MCDA output to as a `.csv` file
-
-This script is designed to run a single polygon through the relevant steps to provide an output for testing or validation purposes. By default the script will print out a representation of the data but the output can be saved to a file using the `-o` switch.
-
-## Process multiple polygons
+## Process polygons
 
 To run locally with multiple polygons, enter the virtual environment you created and run the script;
 
@@ -213,7 +196,7 @@ To run locally with multiple polygons, enter the virtual environment you created
 python calculate_actions_for_multiple_inputs.py -i polygons.pkg -l layers.json -w weightings.json -q qeia.json --output-path "path/to/output"
 ```
 
-This will output a CSV with the MCDA output to `mcda.csv` as well as intermediate priority / weighted priority scores and an eligiblity option table that can be used in the script as precalculated inputs, the full list of inputs are described below;
+This will output a CSV with the MCDA output to `mcda.csv` as well as intermediate priority / weighted priority scores that can be used in the script as precalculated inputs, the full list of inputs are described below;
 
  - Required inputs:
     - `-i / --polygon-source {path}` - Path to polygon datasource, ideally a GeoPackage, but should function with any vector format
