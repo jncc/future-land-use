@@ -160,13 +160,13 @@ def main(polygonPath: str,
             if Path(eligibilityOptionsPath).suffix == '.parquet':
                 logging.info('Eligibility options in parquet format, reading as such assuming RPA input')
                 optionEligbilityAreas = pd.read_parquet(eligibilityOptionsPath)
-                optionEligbilityAreas.set_index('id_parcel', inplace=True)
+                optionEligbilityAreas.set_index(polygonIdColumn, inplace=True)
                 # Convert to boolean options if not already
                 optionEligbility = optionEligbilityAreas.map(lambda x: False if np.isnan(x) else bool(x))
                 optionEligbility.index.names = ['id']
             else:
                 optionEligbilityAreas = pd.read_csv(eligibilityOptionsPath)
-                optionEligbilityAreas.set_index('id_parcel', inplace=True)
+                optionEligbilityAreas.set_index(polygonIdColumn, inplace=True)
                 optionEligbility = optionEligbilityAreas.map(lambda x: False if np.isnan(x) else bool(x))
 
             mergedPriorityScores = mergeEligibilityOptions(mergedPriorityScores, optionEligbility)
@@ -211,7 +211,7 @@ def main(polygonPath: str,
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate action scores for a set of input polygons using priority scores, eligibility options and a QEIA matrix')
     parser.add_argument('-i', '--polygon-source', type=str, required=True, help='Unique ID for the polygon')
-    parser.add_argument('-c', '--polygon-id-column', type=str, required=False, default='NGC', help='Column name for the polygon ID')
+    parser.add_argument('-c', '--polygon-id-column', type=str, required=False, default='id_parcel', help='Column name for the polygon ID')
     parser.add_argument('-l', '--layer-config', type=str, required=False, default='layers.json', help='JSON file containing priority and eligibility layers')
     parser.add_argument('-w', '--weightings-config', type=str, required=False, default='weightings.json', help='JSON file containing priority weightings')
     parser.add_argument('-q', '--qeia-matrix', type=str, required=False, help='Raw QEIA impact score matrix file')
