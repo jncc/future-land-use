@@ -60,11 +60,11 @@ def groupColumnAggregation(priorityScores: pd.DataFrame, group: str, eligibleOpt
 
     match operation:
         case 'MAX':
-            priorityScores[f'{group}'] = priorityScores[groupColumns].max(axis=1, skipna=True)
+            priorityScores.loc[:, group] = priorityScores[groupColumns].max(axis=1, skipna=True)
         case 'MIN':
-            priorityScores[f'{group}'] = priorityScores[groupColumns].min(axis=1, skipna=True)
+            priorityScores.loc[:, group] = priorityScores[groupColumns].min(axis=1, skipna=True)
         case 'AVG':
-            priorityScores[f'{group}'] = priorityScores[groupColumns].mean(axis=1, skipna=True)
+            priorityScores.loc[:, group] = priorityScores[groupColumns].mean(axis=1, skipna=True)
         case _:
             raise ValueError(f'Unsupported operation {operation} for group aggregation')
         
