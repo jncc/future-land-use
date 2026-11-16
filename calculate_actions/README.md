@@ -225,7 +225,7 @@ This will output a CSV with the MCDA output to `mcda.csv` as well as intermediat
      - Run configuration:
          - `--run-name {name}` - [**Optional**] Name to append to all output files, if not specified files will be created as specified [Default: None]
      - Polygon layer:
-        - `-c / --polygon-id-column {name}` - [**Optional**] allows user to specify the attribute column name to use as an ID for polygons [Default: NGC]
+        - `-c / --polygon-id-column {name}` - [**Optional**] allows user to specify the attribute column name to use as an ID for polygons [Default: id_parcel]
     - Priority scores:
          - `--use-precalculated-priority-scores / --no-use-precalculated-priority-scores` - [**Optional**] Use precalculated priority scores, uses the existing filename for this run or the override file if specified [Default: False]
          - `--priority-score-filename {filename}` - [**Optional**] Filename pattern to store output priority score CSV file under [Default: `priority_scores.csv`]
@@ -241,12 +241,7 @@ This will output a CSV with the MCDA output to `mcda.csv` as well as intermediat
          - `--write-active-services-matrix / --no-write-active-services-matrix` - [**Optional**] Write active services matrix to file at the path specified above [Default: False]
          - `--override-active-services-matrix-path' {path}` - [**Optional**] Path to override the active services matrix CSV file to use for writing to / reading from if using precalculated active services matrix [Default: None]
      - Eligibility:
-         - `--use-precalculated-eligibility-options / --no-use-precalculated-eligibility-options` - [**Optional**] Use precalculated eligibility options, uses the existing filename for this run or the override file if specified [Default: False]
-         - `--eligibility-options-filename {filename}` - [**Optional**] Filename pattern to store calculated eligiblity options out to as CSV [Default: `eligibility.csv`]
-         - `--overwrite-eligibility-options / --no-overwrite-eligibility-options` - [**Optional**] Overwrite eligibility option output if it exists [Default: False]
-         - `--precalculated-eligibility-is-area / --no-precalculated-eligibility-is-area` - [**Optional**] Indicates that the precalculated eligibility options file contains area values rather than boolean TRUE/FALSE values [Default: False]
-         - `--override-eligibility-options-path {path}` - [**Optional**] Path to override the eligibility options CSV file to use for writing to / reading from if using precalculated eligibility options [Default: None]
-     - Column aggregation:
+         - `--eligibility-options-path {path}` - [**Optional**] Path to eligibility options CSV or Parquet file [Default: `eligibility_options.csv`]
          - `--column-group-config-path` - [**Optional**] Path to a JSON file containing a configuration object for column group aggregation, by default no aggregation will be performed [Default: None]
      - MCDA: 
          - `--mcda-filename {filename}` - [**Optional**] Filename pattern to store output MCDA CSV file under [Default: `mcda.csv`]
@@ -255,13 +250,11 @@ This will output a CSV with the MCDA output to `mcda.csv` as well as intermediat
 
 You can use the `--use-precalculated-x` arguments to input previously run outputs for the relevant steps to speed up processing while adjusting elements of the inputs. They would typically be used in conjunction with the `--override-x-path` arguments to specify the path to the precalculated files.
 
-For example if you had already calculated the priority scores and eligibility options for a set of polygons, and wanted to adjust the weightings and QEIA matrix you could run;
+For example if you had already calculated the priority scores for a set of polygons, and wanted to adjust the weightings and QEIA matrix you could run;
 
 ```bash
-python calculate_actions_for_multiple_inputs.py -i polygons.pkg -l layers.json -w weightings.json -q qeia.json --use-precalculated-priority-scores --override-priority-score-path ./outputs/priority_scores.csv --use-precalculated-eligibility-options --override-eligibility-options-path ./outputs/eligibility.csv
-``` 
-The system will also accept precalculated eligiblity option files in parquet format if the file extension is `.parquet`. NOTE: This only applies to the precalculated input files, all output files will be written as CSV at present.
-
+python calculate_actions_for_multiple_inputs.py -i polygons.pkg -l layers.json -w weightings.json -q qeia.json --use-precalculated-priority-scores --override-priority-score-path ./outputs/priority_scores.csv
+```
 The options for output file naming and paths allow you to control where the outputs are stored and what they are named. All output files will be stored in the location specified using `--output-path`. If you specify a `--run-name` this will be appended to the filenames before the file extension, i.e. if you specify a run name of `test1` the MCDA output file will be named `mcda_test1.csv` and all files will be put into a folder of the `run-name` under the path specified by `--output-path`.
 
 ## Utility Scripts
@@ -271,7 +264,7 @@ The options for output file naming and paths allow you to control where the outp
 We have included a basic test set of data to do a simple test of the score calculation, this can be run with the following command;
 
 ```bash
-python calculate_actions_for_multiple_inputs.py -c id -i ./testing/precalculated/layers.json  -l ./testing/precalculated/layers.json -w ./testing/precalculated/weightings.json -q ./testing/precalculated/qeia.json --precalculated_priority_scores ./testing/precalculated/priority_scores.csv --precalculated_eligibility ./testing/precalculated/eligibility_options.csv --column_group_config_path ./testing/precalculated/column_aggregation.json --active_services_matrix_path ./testing/precalculated/active_services_matrix.csv --mcda_output_path ./testing/precalculated/mcda.csv --overwrite_mcda_output --overwrite_weighted_priority_score_output
+python calculate_actions_for_multiple_inputs.py -c id -i ./testing/precalculated/layers.json  -l ./testing/precalculated/layers.json -w ./testing/precalculated/weightings.json -q ./testing/precalculated/qeia.json --use-precalculated-priority-scores --override-priority-score-path ./testing/precalculated/priority_scores.csv --eligibility-options-path ./testing/precalculated/eligibility_options.csv --column-group-config-path ./testing/precalculated/column_aggregation.json --output-path ./testing/precalculated/mcda.csv --overwrite-mcda --overwrite-weighted-priority-score
 ```
 
 ### Generate Column Aggregation Templates
@@ -384,9 +377,23 @@ python utility/generate_random_qeia_matrix.py -l layers.json -o qeia.json --min_
  - `--max_range` - [**Optional**] Maximum range for impact scores, default is 3
  - `--whole_numbers` - [**Optional**] If set, will generate whole numbers for impact scores, default is False (i.e. will generate floats)
 
+ ### Generate Eligibility Options
+
+Run the utility script `utility/generate_eligibility_options.py` to generate an eligiblity options file from multiple eligiblity layers, for the given input polygons.
+
+```bash
+python utility/generate_eligibility_options.py -i polygons.gpkg -c id_column -l layers.json -o eligibility_options.csv
+```
+    
+ - `-i / --polygon-source {path}` - Path to polygon datasource, ideally a GeoPackage, but should function with any vector format
+ - `-c / --polygon_id_column {name}` - [**Optional**] allows user to specify the attribute column name to use as an ID for polygons [Default: id_parcel]
+ - `-l / --layer_config {path}` - Path to JSON file containing eligibility layers
+ - `-o / --eligibility-options-path {path}` - Path to store eligibility options file
+ - `--overwrite-eligibility-options` - Overwrite eligibility options file if it already exists [Default: False]
+
 ### Pregenerated Eligibility Options (Force True)
 
-Run the utiltity script `utility/generate_true_eligibility_table.py` to pre generate an options eligbility table where all polygons are fored to be eligible for all options.
+Run the utiltity script `utility/generate_true_eligibility_table.py` to pre generate an options eligbility table where all polygons are forced to be eligible for all options.
 
 ```bash
 python utility/generate_true_eligibility_table.py -i polygons.gpkg -c id_column -l layers.json -o eligibility.csv
@@ -396,3 +403,4 @@ python utility/generate_true_eligibility_table.py -i polygons.gpkg -c id_column 
  - `-c / --polygon_id_column {name}` - [**Optional**] allows user to specify the attribute column name to use as an ID for polygons [Default: NGC]
  - `-l / --layer_config {path}` - Path to JSON file containing priority and eligibility layers
  - `-o / --eligibility_output {path}` - Path to store eligibility output table [Default: `eligibility.csv`]
+
