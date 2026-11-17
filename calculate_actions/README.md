@@ -6,9 +6,34 @@ A set of scripts to calculate the priority and eligible actions for given polygo
 
 ### Layer Config
 
-There is a template file for layer configuration `layers.json.template`, this contains configuration and file paths to 
-data layers used by this tool. The file will be split into two main sections, priority_layers andeligibility_layers in 
-the form:
+There is a template file for layer configuration `layers.json.template`, this contains configuration and file paths to data layers used by this tool.
+
+```json
+{
+    "priority_layers": {
+        "unique_layer_id": {
+            "layer_name": "Human friendly name",
+            "filepath": "path/to/file.ext",
+            "type": "vector"  // or "raster" for raster files
+        },
+        ...
+    }
+}
+```
+
+All layers need to be in the same projection for the scripts to work correctly.
+
+#### Priority Layers
+
+For each prority layer an entry should be added under the `priority_layers` object in the configuation JSON  file, this can be a vector (i.e. `.gpkg`) or a raster file (i.e. `.tif`). Each needs to have a unique ID label and should have a unique `layer_name` and `filepath`.
+
+Priority layer labels should be in the form of `Priority_{EcosystemServiceGroup}_{Action}` where EcosystemServiceGroup is the abbreviated name of the ecosystem service group (i.e. `Biod` for Biodiversity) and Action is the abbreviated name of the action (i.e. `MaintainSNH` for Maintain Semi-Natural Habitats).
+
+#### Eligibility Layers
+
+If you have eligibility layers, you can also configure them here and then use the `utility/generate_eligibility_options.py` script to process them into an eligiblity options CSV file.
+
+For each eligibility layer an entry should be added under the `eligibility_layers` object in the configuration JSON file, this can be a vector (i.e. `.gpkg`), currently raster eligibilty layers are not supported. Each needs to have a unique ID label and should have a unique `layer_name` and `filepath`.
 
 ```json
 {
@@ -31,31 +56,11 @@ the form:
 }
 ```
 
-All layers need to be in the same projection for the scripts to work correctly.
-
-#### Priority Layers
-
-For each prority layer an entry should be added under the `priority_layers` object in the configuation JSON file, this
-can be a vector (i.e. `.gpkg`) or a raster file (i.e. `.tif`). Each needs to have a unqiue ID label and should have a 
-unique `layer_name` and `filepath`.
-
-Priority layer labels should be in the form of `Priority_{EcosystemServiceGroup}_{Action}` where EcosystemServiceGroup is the
-abbreviated name of the ecosystem service group (i.e. `Biod` for Biodiversity) and Action is the abbreviated name of the action
-(i.e. `MaintainSNH` for Maintain Semi-Natural Habitats).
-
-#### Eligibility Layers
-
-For each prority layer an entry should be added under the `priority_layers` object in the configuation JSON file, this
-can be a vector (i.e. `.gpkg`), currently raster eligibilty layers are not supported. Each needs to have a unqiue ID 
-label and should have a unique `layer_name` and `filepath`.
-
-Eligibility layer labels currently do not have a specific format, but should be short, unique and descriptive of the layer, i.e.
-`GS6`, `LH1`, `SW17`, `SW18` etc.
+Eligibility layer labels currently do not have a specific format, but should be short, unique and descriptive of the layer, i.e. `GS6`, `LH1`, `SW17`, `SW18` etc.
 
 ### Column Aggregation
 
-There are some priority layers that should be aggregated together to prevent them from There is a template file for column aggregation `column_aggregation.json.template`, this contains an example of how to 
-aggregate the values of the priority layers for each polygon, this is in the form:
+Some priority layer scores need to be aggregated before being used for the MCDA calculation. There is a template file for column aggregation `column_aggregation.json.template`, this contains an example of how to aggregate the values of the priority layers for each polygon, this is in the form:
 
 ```json
 {
@@ -75,12 +80,9 @@ aggregate the values of the priority layers for each polygon, this is in the for
 }
 ```
 
-Where each line the `priority_layer_group_label` matches an entry in the pattern for a group of priority layers  in the config 
-file described above.
+Where each line the `priority_layer_group_label` matches an entry in the pattern for a group of priority layers in the config file described above.
 
-For example if you have a group of priority layers that are all related to maintainging semi-natural habitats, you could have a 
-group label of `Priority_Biod_MaintainSNH` (`Biod` being the ecosystem service group, `MaintainSNH` being the action) and then have a
-set of Priority Layers such as `Priority_Biod_MaintainSNH_LCG`, `Priority_Biod_MaintainSNH_BBG` etc. which could present as;
+For example if you have a group of priority layers that are all related to maintaining semi-natural habitats, you could have a group label of `Priority_Biod_MaintainSNH` (`Biod` being the ecosystem service group, `MaintainSNH` being the action) and then have a set of Priority Layers such as `Priority_Biod_MaintainSNH_LCG`, `Priority_Biod_MaintainSNH_BBG` etc. which could present as;
 
 ```json
 {
@@ -99,13 +101,11 @@ set of Priority Layers such as `Priority_Biod_MaintainSNH_LCG`, `Priority_Biod_M
 }
 ```
 
-The `operation` can be one of `MAX`, `MIN`, `AVG` more operations may be added in the future, but the commonly used one is currently 
-`MAX` to get the maximum value for each polygon across the priority layers in the group.
+The `operation` can be one of `MAX`, `MIN`, `AVG`. More operations may be added in the future, but the commonly used one is currently `MAX` to get the maximum value for each polygon across the priority layers in the group.
 
 ### Weightings
 
-There is a template file for layer configuration `weightings.json.template`, this contains weightings that will be applied
-to the extracted priority scores for each input polygon in the form:
+There is a template file for layer configuration `weightings.json.template`, this contains weightings that will be applied to the extracted priority scores for each input polygon in the form:
 
 ```json
     {
@@ -118,7 +118,7 @@ Where each line the `priority_layer_label` matches an entry in the Priority Laye
 
 ### QEIA matrix
 
-This is a transformative matrix that defines the modifier to use for each eligible option for each polygon, there is 
+This is a transformative matrix that defines the modifier to use for each eligible option for each priority layer, there is 
 a template example at `qeia.json.template` where data is of the form:
 
 ```json
@@ -132,11 +132,9 @@ a template example at `qeia.json.template` where data is of the form:
 
 ```
 
-Where the `eligibility_layer_label` matches an entry in the Eligibility section of the Layers config file defined above
-and `priority_layer_label` matches an entry in Priority Layer section of the Layers config file.
+Where the `eligibility_layer_label` matches an entry in the Eligibility section of the Layers config file defined above and `priority_layer_label` matches an entry in Priority Layer section of the Layers config file.
 
-The value should be an integer between -3 and 3 (this is not enfored at present), it also support `null` values to indicate
-a not assesed or unknown impact value.
+The value should be an integer between -3 and 3 (this is not enforced at present), it also supports `null` values to indicate a not assesed or unknown impact value.
 
 ## Create local virtual environment
 
@@ -144,17 +142,14 @@ From the `calculate_actions` folder
 
 ### Conda
 
-**Currently preferred on Windows** A number of the wheels that `pip` depends on under windows are not being distributed
-anymore and to get around the lack of compile environments we suggest using `Conda` package management. The distribution
-was tested using Miniforge and we suggest the use of conda-forge only to avoid licence issues.
+**Currently preferred on Windows** A number of the wheels that `pip` depends on under windows are not being distributed anymore and to get around the lack of compile environments we suggest using `Conda` package management. The distribution was tested using Miniforge and we suggest the use of conda-forge only to avoid licence issues.
 
 ```bash
 conda create -n flu -f environment.yml
 conda activate flu
 ```
 
-This should work under Windows and Linux environments, will attempt to maintain the pip requirements.txt in tandem with
-the conda environment, but you should assume the conda environment should be the most up to date for development / use.
+This should work under Windows and Linux environments, will attempt to maintain the pip requirements.txt in tandem with the conda environment, but you should assume the conda environment should be the most up to date for development / use.
 
 ### Linux
 
@@ -191,29 +186,9 @@ python -m pip install -r requirements.txt
 
 To leave the virtual environment close the window or use `deactivate`
 
-**NOTE**: You can potentially run this via powershell, but frequently system admins will lock down running powershell 
-scripts (`activate.ps1`).
+**NOTE**: You can potentially run this via powershell, but frequently system admins will lock down running powershell scripts (`activate.ps1`).
 
-## Process single polygon
-
-To run locally with a single polygon, enter the virtual environment you created and run the script;
-
-```bash
-python calculate_actions_for_single_input.py -i 1234567 -p 1234567.wkt -l layers.json -w weighting.json -q qeia.json
-```
-
- - `-i / --polyid` - Unique ID for the polygon
- - `-p / --polygon_wkt` - Path to WKT file containing polygon geometry
- - `-l / --layer_config` - Path to JSON file containing priority and eligibility layers
- - `-w / --weightings_config`- Path to JSON file containing priority weightings
- - `-q / --qeia_matrix` - Path to JSON file containing QEIA matrix
- - `-o / --output` - (Optional) Path to store MCDA output to as a `.csv` file
-
-This script is designed to run a single polygon through the relevant steps to provide an output
-for testing or validation purposes. By default the script will print out a representation of the data
-but the output can be saved to a file using the `-o` switch.
-
-## Process multiple polygons
+## Process polygons
 
 To run locally with multiple polygons, enter the virtual environment you created and run the script;
 
@@ -221,7 +196,7 @@ To run locally with multiple polygons, enter the virtual environment you created
 python calculate_actions_for_multiple_inputs.py -i polygons.pkg -l layers.json -w weightings.json -q qeia.json --output-path "path/to/output"
 ```
 
-This will output a CSV with the MCDA output to `mcda.csv` as well as intermediate priority / weighted priority scores and an eligiblity option table that can be used in the script as precalculated inputs, the full list of inputs are described below;
+This will output a CSV with the MCDA output to `mcda.csv` as well as intermediate priority / weighted priority scores that can be used in the script as precalculated inputs, the full list of inputs are described below;
 
  - Required inputs:
     - `-i / --polygon-source {path}` - Path to polygon datasource, ideally a GeoPackage, but should function with any vector format
@@ -233,7 +208,7 @@ This will output a CSV with the MCDA output to `mcda.csv` as well as intermediat
      - Run configuration:
          - `--run-name {name}` - [**Optional**] Name to append to all output files, if not specified files will be created as specified [Default: None]
      - Polygon layer:
-        - `-c / --polygon-id-column {name}` - [**Optional**] allows user to specify the attribute column name to use as an ID for polygons [Default: NGC]
+        - `-c / --polygon-id-column {name}` - [**Optional**] allows user to specify the attribute column name to use as an ID for polygons [Default: id_parcel]
     - Priority scores:
          - `--use-precalculated-priority-scores / --no-use-precalculated-priority-scores` - [**Optional**] Use precalculated priority scores, uses the existing filename for this run or the override file if specified [Default: False]
          - `--priority-score-filename {filename}` - [**Optional**] Filename pattern to store output priority score CSV file under [Default: `priority_scores.csv`]
@@ -243,18 +218,13 @@ This will output a CSV with the MCDA output to `mcda.csv` as well as intermediat
         - `--use-precalculated-weighted-priority-scores / --no-use-precalculated-weighted-priority-scores` - [**Optional**] Use precalculated weighted priority scores, uses the existing filename for this run or the override file if specified [Default: False]
         - `--weighted-priority-score-filename {filename}` - [**Optional**] Filename pattern to store calculated weighted priority scores out to as CSV [Default: `weighted_priority_scores.csv`]
         - `--overwrite-weighted-priority-scores / --no-overwrite-weighted-priority-scores` - [**Optional**] Overwrite weighted priority score output if it exists [Default: False]
-        - `override-weighted-priority-score-path {path}` - [**Optional**] Path to override the weighted priority score CSV file to use for writing to / reading from if using precalculated weighted priority scores [Default: None]
+        - `--override-weighted-priority-score-path {path}` - [**Optional**] Path to override the weighted priority score CSV file to use for writing to / reading from if using precalculated weighted priority scores [Default: None]
     - Active services matrix:
-         - `active-services-matrix-filename {path}` - [**Optional**] Path to CSV containing active services matrix to filter priority layers by [Default: None]
+         - `--active-services-matrix-filename {path}` - [**Optional**] Path to CSV containing active services matrix to filter priority layers by [Default: None]
          - `--write-active-services-matrix / --no-write-active-services-matrix` - [**Optional**] Write active services matrix to file at the path specified above [Default: False]
          - `--override-active-services-matrix-path' {path}` - [**Optional**] Path to override the active services matrix CSV file to use for writing to / reading from if using precalculated active services matrix [Default: None]
      - Eligibility:
-         - `--use-precalculated-eligibility-options / --no-use-precalculated-eligibility-options` - [**Optional**] Use precalculated eligibility options, uses the existing filename for this run or the override file if specified [Default: False]
-         - `--eligibility-options-filename {filename}` - [**Optional**] Filename pattern to store calculated eligiblity options out to as CSV [Default: `eligibility.csv`]
-         - `--overwrite-eligibility-options / --no-overwrite-eligibility-options` - [**Optional**] Overwrite eligibility option output if it exists [Default: False]
-         - `--precalculated-eligibility-is-area / --no-precalculated-eligibility-is-area` - [**Optional**] Indicates that the precalculated eligibility options file contains area values rather than boolean TRUE/FALSE values [Default: False]
-         - `--override-eligibility-options-path {path}` - [**Optional**] Path to override the eligibility options CSV file to use for writing to / reading from if using precalculated eligibility options [Default: None]
-     - Column aggregation:
+         - `--eligibility-options-path {path}` - [**Optional**] Path to eligibility options CSV or Parquet file [Default: `eligibility_options.csv`]
          - `--column-group-config-path` - [**Optional**] Path to a JSON file containing a configuration object for column group aggregation, by default no aggregation will be performed [Default: None]
      - MCDA: 
          - `--mcda-filename {filename}` - [**Optional**] Filename pattern to store output MCDA CSV file under [Default: `mcda.csv`]
@@ -263,13 +233,11 @@ This will output a CSV with the MCDA output to `mcda.csv` as well as intermediat
 
 You can use the `--use-precalculated-x` arguments to input previously run outputs for the relevant steps to speed up processing while adjusting elements of the inputs. They would typically be used in conjunction with the `--override-x-path` arguments to specify the path to the precalculated files.
 
-For example if you had already calculated the priority scores and eligibility options for a set of polygons, and wanted to adjust the weightings and QEIA matrix you could run;
+For example if you had already calculated the priority scores for a set of polygons, and wanted to adjust the weightings and QEIA matrix you could run;
 
 ```bash
-python calculate_actions_for_multiple_inputs.py -i polygons.pkg -l layers.json -w weightings.json -q qeia.json --use-precalculated-priority-scores --override-priority-score-path ./outputs/priority_scores.csv --use-precalculated-eligibility-options --override-eligibility-options-path ./outputs/eligibility.csv
-``` 
-The system will also accept precalculated eligiblity option files in parquet format if the file extension is `.parquet`. NOTE: This only applies to the precalculated input files, all output files will be written as CSV at present.
-
+python calculate_actions_for_multiple_inputs.py -i polygons.pkg -l layers.json -w weightings.json -q qeia.json --use-precalculated-priority-scores --override-priority-score-path ./outputs/priority_scores.csv
+```
 The options for output file naming and paths allow you to control where the outputs are stored and what they are named. All output files will be stored in the location specified using `--output-path`. If you specify a `--run-name` this will be appended to the filenames before the file extension, i.e. if you specify a run name of `test1` the MCDA output file will be named `mcda_test1.csv` and all files will be put into a folder of the `run-name` under the path specified by `--output-path`.
 
 ## Utility Scripts
@@ -279,7 +247,7 @@ The options for output file naming and paths allow you to control where the outp
 We have included a basic test set of data to do a simple test of the score calculation, this can be run with the following command;
 
 ```bash
-python calculate_actions_for_multiple_inputs.py -c id -i ./testing/precalculated/layers.json  -l ./testing/precalculated/layers.json -w ./testing/precalculated/weightings.json -q ./testing/precalculated/qeia.json --precalculated_priority_scores ./testing/precalculated/priority_scores.csv --precalculated_eligibility ./testing/precalculated/eligibility_options.csv --column_group_config_path ./testing/precalculated/column_aggregation.json --active_services_matrix_path ./testing/precalculated/active_services_matrix.csv --mcda_output_path ./testing/precalculated/mcda.csv --overwrite_mcda_output --overwrite_weighted_priority_score_output
+python calculate_actions_for_multiple_inputs.py -c id -i ./testing/precalculated/layers.json  -l ./testing/precalculated/layers.json -w ./testing/precalculated/weightings.json -q ./testing/precalculated/qeia.json --use-precalculated-priority-scores --override-priority-score-path ./testing/precalculated/priority_scores.csv --eligibility-options-path ./testing/precalculated/eligibility_options.csv --column-group-config-path ./testing/precalculated/column_aggregation.json --output-path ./testing/precalculated/mcda.csv --overwrite-mcda --overwrite-weighted-priority-score
 ```
 
 ### Generate Column Aggregation Templates
@@ -303,8 +271,7 @@ OPT1,TRUE,FALSE,FALSE,...
 OPT2,FALSE,TRUE,FALSE,...
 OPT3,FALSE,FALSE,TRUE,...
 ```
-In this example, `ASN`, `BLB`, and `LCG` are the priority layers options and `OPT1`, `OPT2`, and `OPT3` are the eligibility options. The output will be a JSON object with the aggregation configuration 
-for each option.
+In this example, `ASN`, `BLB`, and `LCG` are the priority layers options and `OPT1`, `OPT2`, and `OPT3` are the eligibility options. The output will be a JSON object with the aggregation configuration for each option.
 
 i.e.
 
@@ -393,10 +360,23 @@ python utility/generate_random_qeia_matrix.py -l layers.json -o qeia.json --min_
  - `--max_range` - [**Optional**] Maximum range for impact scores, default is 3
  - `--whole_numbers` - [**Optional**] If set, will generate whole numbers for impact scores, default is False (i.e. will generate floats)
 
+ ### Generate Eligibility Options
+
+Run the utility script `utility/generate_eligibility_options.py` to generate an eligiblity options file from multiple eligiblity layers, for the given input polygons.
+
+```bash
+python utility/generate_eligibility_options.py -i polygons.gpkg -c id_column -l layers.json -o eligibility_options.csv
+```
+    
+ - `-i / --polygon-source {path}` - Path to polygon datasource, ideally a GeoPackage, but should function with any vector format
+ - `-c / --polygon_id_column {name}` - [**Optional**] allows user to specify the attribute column name to use as an ID for polygons [Default: id_parcel]
+ - `-l / --layer_config {path}` - Path to JSON file containing eligibility layers
+ - `-o / --eligibility-options-path {path}` - Path to store eligibility options file
+ - `--overwrite-eligibility-options` - Overwrite eligibility options file if it already exists [Default: False]
+
 ### Pregenerated Eligibility Options (Force True)
 
-Run the utiltity script `utility/generate_true_eligibility_table.py` to pre generate an options
-eligbility table where all polygons are fored to be eligible for all options.
+Run the utiltity script `utility/generate_true_eligibility_table.py` to pre generate an options eligbility table where all polygons are forced to be eligible for all options.
 
 ```bash
 python utility/generate_true_eligibility_table.py -i polygons.gpkg -c id_column -l layers.json -o eligibility.csv
@@ -406,3 +386,4 @@ python utility/generate_true_eligibility_table.py -i polygons.gpkg -c id_column 
  - `-c / --polygon_id_column {name}` - [**Optional**] allows user to specify the attribute column name to use as an ID for polygons [Default: NGC]
  - `-l / --layer_config {path}` - Path to JSON file containing priority and eligibility layers
  - `-o / --eligibility_output {path}` - Path to store eligibility output table [Default: `eligibility.csv`]
+

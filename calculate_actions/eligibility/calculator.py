@@ -82,7 +82,7 @@ def calculateOptionEligibilityForInputPolygon(polygonId: str, polygon: Polygon, 
     return inputEligibility
 
 
-def calculateOptionEligibilityForInputPolygons(polygonSource: Path, eligibilityLayers: dict[str, EligibilityLayer]) -> pd.DataFrame:
+def calculateOptionEligibilityForInputPolygons(polygonSource: Path, polygonIdColumn: str, eligibilityLayers: dict[str, EligibilityLayer]) -> pd.DataFrame:
     """Calculate the eligibility for the input polygon, using the provided eligibility layers
     """
     inputParcels = gpd.read_file(polygonSource)
@@ -91,6 +91,6 @@ def calculateOptionEligibilityForInputPolygons(polygonSource: Path, eligibilityL
 
     for parcel in inputParcels.iterrows():
         eligibleLayers = eligibilityCalculator.determineEligibilityForPolygon(parcel[1]['geometry'], False)
-        inputEligibility.loc[parcel[1]['NGC']] = [True if eligibilityLayers[layer].layer.name in eligibleLayers else False for layer in eligibilityLayers.keys()]
+        inputEligibility.loc[parcel[1][polygonIdColumn]] = [True if eligibilityLayers[layer].layer.name in eligibleLayers else False for layer in eligibilityLayers.keys()]
 
     return inputEligibility

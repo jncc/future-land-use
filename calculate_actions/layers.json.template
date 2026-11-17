@@ -8,6 +8,7 @@
         "enhancement_of_blue_green_infrastructure": {
             "layer_name": "Enhancement of blue-green infrastructure",
             "filepath": "Enhancement of blue-green infrastructure.gpkg",
+            "column_name": "zscore",
             "type": "vector"
         },
         "flooding_nfm": {

@@ -43,7 +43,7 @@ def calculateMCDAForPriorityScoresWithEligibility(priorityScores: pd.DataFrame, 
     
     qeiaMultiplier = templateToQEIAMultiplier(priorityScores, qeia)
     mcda = priorityScores.mul(qeiaMultiplier)
-    mcda['total'] = mcda.sum(axis=1)
-    mcda['rank'] = mcda.groupby(level=0)['total'].rank(method='first', ascending=False)
+    mcda.loc[:, 'total'] = mcda.sum(axis=1)
+    mcda.loc[:, 'rank'] = mcda.groupby(level=0)['total'].rank(method='first', ascending=False)
 
     return mcda.sort_values(['id', 'rank'])
